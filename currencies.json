@@ -1,0 +1,344 @@
+{
+    "data": [
+        {
+            "currency": "TWD",
+            "withdrawFee": "30",
+            "minWithdraw": "100",
+            "maxWithdraw": "2000000",
+            "maxDailyWithdraw": "2000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "0"
+        },
+        {
+            "currency": "ADA",
+            "withdrawFee": "1",
+            "minWithdraw": "3",
+            "maxWithdraw": "50000",
+            "maxDailyWithdraw": "200000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "35"
+        },
+        {
+            "currency": "APE (ERC20)",
+            "withdrawFee": "4.2",
+            "minWithdraw": "8",
+            "maxWithdraw": "10000",
+            "maxDailyWithdraw": "50000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "12"
+        },
+        {
+            "currency": "BCH",
+            "withdrawFee": "0.00025",
+            "minWithdraw": "0.001",
+            "maxWithdraw": "500",
+            "maxDailyWithdraw": "1000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "20"
+        },
+        {
+            "currency": "BITO (ERC20)",
+            "withdrawFee": "50",
+            "minWithdraw": "200",
+            "maxWithdraw": "3000000",
+            "maxDailyWithdraw": "10000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "BNB (BEP20)",
+            "withdrawFee": "0.0002",
+            "minWithdraw": "0.1",
+            "maxWithdraw": "750",
+            "maxDailyWithdraw": "1500",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "BNB",
+            "withdrawFee": "0.00016",
+            "minWithdraw": "0.1",
+            "maxWithdraw": "750",
+            "maxDailyWithdraw": "1500",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "BTC",
+            "withdrawFee": "0.00004",
+            "minWithdraw": "0.0005",
+            "maxWithdraw": "50",
+            "maxDailyWithdraw": "100",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "3"
+        },
+        {
+            "currency": "DOGE",
+            "withdrawFee": "4",
+            "minWithdraw": "5",
+            "maxWithdraw": "1000000",
+            "maxDailyWithdraw": "2000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "50"
+        },
+        {
+            "currency": "EOS",
+            "withdrawFee": "0.3",
+            "minWithdraw": "1",
+            "maxWithdraw": "5500",
+            "maxDailyWithdraw": "11000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "ETH",
+            "withdrawFee": "0.0006",
+            "minWithdraw": "0.001",
+            "maxWithdraw": "500",
+            "maxDailyWithdraw": "1000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "LTC",
+            "withdrawFee": "0.0001",
+            "minWithdraw": "0.002",
+            "maxWithdraw": "2000",
+            "maxDailyWithdraw": "5000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "5"
+        },
+        {
+            "currency": "MATIC (ERC20)",
+            "withdrawFee": "11",
+            "minWithdraw": "10",
+            "maxWithdraw": "100000",
+            "maxDailyWithdraw": "200000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "MATIC",
+            "withdrawFee": "0.08",
+            "minWithdraw": "10",
+            "maxWithdraw": "100000",
+            "maxDailyWithdraw": "200000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "128"
+        },
+        {
+            "currency": "MV (Polygon)",
+            "withdrawFee": "10",
+            "minWithdraw": "1",
+            "maxWithdraw": "500000",
+            "maxDailyWithdraw": "1000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "300"
+        },
+        {
+            "currency": "POL",
+            "withdrawFee": "0.1",
+            "minWithdraw": "10",
+            "maxWithdraw": "100000",
+            "maxDailyWithdraw": "200000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "128"
+        },
+        {
+            "currency": "POL (ERC20)",
+            "withdrawFee": "11",
+            "minWithdraw": "10",
+            "maxWithdraw": "100000",
+            "maxDailyWithdraw": "200000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "SHIB (ERC20)",
+            "withdrawFee": "250000",
+            "minWithdraw": "500000",
+            "maxWithdraw": "5000000000",
+            "maxDailyWithdraw": "20000000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "SOL",
+            "withdrawFee": "0.0011",
+            "minWithdraw": "0.03",
+            "maxWithdraw": "5000",
+            "maxDailyWithdraw": "10000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "TON",
+            "withdrawFee": "0.02",
+            "minWithdraw": "0.1",
+            "maxWithdraw": "20000",
+            "maxDailyWithdraw": "80000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "20"
+        },
+        {
+            "currency": "TON (ERC20)",
+            "withdrawFee": "1",
+            "minWithdraw": "0.1",
+            "maxWithdraw": "20000",
+            "maxDailyWithdraw": "80000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "TRX (ERC20)",
+            "withdrawFee": "75",
+            "minWithdraw": "10",
+            "maxWithdraw": "1000000",
+            "maxDailyWithdraw": "3000000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "TRX",
+            "withdrawFee": "1",
+            "minWithdraw": "10",
+            "maxWithdraw": "1000000",
+            "maxDailyWithdraw": "3000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "USDC (Polygon)",
+            "withdrawFee": "0.05",
+            "minWithdraw": "10",
+            "maxWithdraw": "200000",
+            "maxDailyWithdraw": "1000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "300"
+        },
+        {
+            "currency": "USDC (ERC20)",
+            "withdrawFee": "2.6",
+            "minWithdraw": "10",
+            "maxWithdraw": "200000",
+            "maxDailyWithdraw": "1000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "USDC (TRC20)",
+            "withdrawFee": "1",
+            "minWithdraw": "10",
+            "maxWithdraw": "200000",
+            "maxDailyWithdraw": "1000000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "USDC (BEP20)",
+            "withdrawFee": "0.35",
+            "minWithdraw": "10",
+            "maxWithdraw": "200000",
+            "maxDailyWithdraw": "1000000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "15"
+        },
+        {
+            "currency": "USDT (BEP20)",
+            "withdrawFee": "0.1",
+            "minWithdraw": "10",
+            "maxWithdraw": "300000",
+            "maxDailyWithdraw": "500000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "15"
+        },
+        {
+            "currency": "USDT (TRC20)",
+            "withdrawFee": "1.6",
+            "minWithdraw": "10",
+            "maxWithdraw": "300000",
+            "maxDailyWithdraw": "500000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "1"
+        },
+        {
+            "currency": "USDT (Omni Layer)",
+            "withdrawFee": "10",
+            "minWithdraw": "10",
+            "maxWithdraw": "300000",
+            "maxDailyWithdraw": "500000",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "3"
+        },
+        {
+            "currency": "USDT (ERC20)",
+            "withdrawFee": "2.6",
+            "minWithdraw": "10",
+            "maxWithdraw": "300000",
+            "maxDailyWithdraw": "500000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "64"
+        },
+        {
+            "currency": "USDT (Polygon)",
+            "withdrawFee": "0.05",
+            "minWithdraw": "10",
+            "maxWithdraw": "300000",
+            "maxDailyWithdraw": "500000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "300"
+        },
+        {
+            "currency": "XRP",
+            "withdrawFee": "0.2",
+            "minWithdraw": "25",
+            "maxWithdraw": "50000",
+            "maxDailyWithdraw": "100000",
+            "withdraw": true,
+            "deposit": true,
+            "depositConfirmation": "6"
+        },
+        {
+            "currency": "YFI (ERC20)",
+            "withdrawFee": "0.0025",
+            "minWithdraw": "0.001",
+            "maxWithdraw": "1",
+            "maxDailyWithdraw": "3",
+            "withdraw": false,
+            "deposit": false,
+            "depositConfirmation": "12"
+        }
+    ]
+}
