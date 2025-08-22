@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>加密貨幣交易平台</title>
+
+    <!-- Semantic UI CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(
+          145deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #334155 100%
+        );
+        min-height: 100vh;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: #e2e8f0;
+      }
+
+      .main-container {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .trading-card {
+        width: 100%;
+        max-width: 650px;
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+          0 8px 24px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .trading-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af);
+      }
+
+      .card-content {
+        padding: 3rem;
+      }
+
+      .main-title {
+        text-align: center;
+        margin-bottom: 3rem;
+        font-weight: 700;
+        font-size: 2rem;
+        color: #f1f5f9;
+        letter-spacing: -0.025em;
+      }
+
+      .price-display {
+        background: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.1),
+          rgba(29, 78, 216, 0.1)
+        );
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 2rem 0;
+        text-align: center;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .price-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #60a5fa;
+        margin: 0;
+        letter-spacing: -0.025em;
+        text-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+      }
+
+      .price-label {
+        color: #94a3b8;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.5rem;
+      }
+
+      .balance-info {
+        background: rgba(51, 65, 85, 0.6);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border: 1px solid rgba(71, 85, 105, 0.5);
+      }
+
+      .balance-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+
+      .balance-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .balance-label {
+        color: #94a3b8;
+        font-weight: 500;
+        font-size: 0.875rem;
+      }
+
+      .balance-value {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+
+      .ui.form .field > label {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        margin-bottom: 0.5rem !important;
+      }
+
+      .ui.dropdown,
+      .ui.input input {
+        background: rgba(51, 65, 85, 0.8) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        color: #e2e8f0 !important;
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .ui.dropdown:focus,
+      .ui.input input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+      }
+
+      .ui.dropdown .text,
+      .ui.dropdown .menu .item {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+      }
+
+      .ui.dropdown .menu {
+        background: rgba(30, 41, 59, 0.95) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      .ui.dropdown .menu .item:hover {
+        background: rgba(59, 130, 246, 0.2) !important;
+      }
+
+      .amount-input input {
+        background: rgba(51, 65, 85, 0.8) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        font-weight: 500 !important;
+        color: #e2e8f0 !important;
+      }
+
+      .quantity-input {
+        background: rgba(51, 65, 85, 0.8) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+
+      .quantity-input input {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #e2e8f0 !important;
+      }
+
+      .quantity-input:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+      }
+
+      .quantity-label {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #60a5fa !important;
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        padding: 0.5rem 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      .ui.buttons .button {
+        background: rgba(51, 65, 85, 0.8) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .ui.buttons .button.active {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        border-color: #3b82f6 !important;
+        color: white !important;
+      }
+
+      .ui.segment {
+        background: rgba(51, 65, 85, 0.6) !important;
+        border: 1px solid rgba(71, 85, 105, 0.5) !important;
+        color: #e2e8f0 !important;
+        border-radius: 12px !important;
+      }
+
+      .trade-button {
+        border-radius: 16px !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        padding: 1rem 2rem !important;
+        transition: all 0.3s ease !important;
+        border: none !important;
+        text-transform: none !important;
+      }
+
+      .buy-button {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        color: white !important;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+      }
+
+      .sell-button {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        color: white !important;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3) !important;
+      }
+
+      .trade-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      .buy-button:hover {
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5) !important;
+      }
+
+      .sell-button:hover {
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5) !important;
+      }
+
+      .trade-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+      }
+
+      .summary-item:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        color: #60a5fa;
+      }
+
+      .summary-label {
+        color: #94a3b8;
+        font-weight: 500;
+      }
+
+      .summary-value {
+        color: #e2e8f0;
+        font-weight: 600;
+      }
+
+      .notification {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: rgba(30, 41, 59, 0.95);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border-left: 4px solid #10b981;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+        backdrop-filter: blur(10px);
+        color: #e2e8f0;
+      }
+
+      .notification.error {
+        border-left-color: #ef4444;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* 修正 h4 標題顏色 */
+      .ui.segment h4 {
+        color: #e2e8f0 !important;
+      }
+
+      /* 修正下拉選單箭頭顏色 */
+      .ui.dropdown > .dropdown.icon {
+        color: #94a3b8 !important;
+      }
+
+      /* 修正 placeholder 顏色 */
+      .ui.input input::placeholder {
+        color: #64748b !important;
+      }
+
+      /* 修正選中項目的背景色 */
+      .ui.dropdown .menu .selected.item,
+      .ui.dropdown .menu .item.selected {
+        background: rgba(59, 130, 246, 0.3) !important;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+
+        .card-content {
+          padding: 2rem;
+        }
+
+        .main-title {
+          font-size: 1.75rem;
+          margin-bottom: 2rem;
+        }
+
+        .price-value {
+          font-size: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <div class="trading-card">
+        <div class="card-content">
+          <h1 class="main-title">
+            <i class="chart line icon" style="color: #3b82f6"></i>
+            Crypto Exchange
+          </h1>
+
+          <!-- 幣種選擇 -->
+          <div class="ui form">
+            <div class="field">
+              <label>選擇交易幣種</label>
+              <select id="coinSelect" class="ui fluid dropdown">
+                <option value="">請選擇幣種</option>
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+                <option value="BNB">Binance Coin (BNB)</option>
+                <option value="ADA">Cardano (ADA)</option>
+                <option value="DOT">Polkadot (DOT)</option>
+                <option value="LINK">Chainlink (LINK)</option>
+                <option value="LTC">Litecoin (LTC)</option>
+                <option value="BCH">Bitcoin Cash (BCH)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 當前價格顯示 -->
+          <div id="priceDisplay" class="price-display" style="display: none">
+            <div class="price-value" id="currentPrice">$0</div>
+            <div class="price-label">當前價格 USD</div>
+          </div>
+
+          <!-- 餘額資訊 -->
+          <div id="balanceInfo" class="balance-info" style="display: none">
+            <div class="balance-row">
+              <span class="balance-label">USD 餘額</span>
+              <span class="balance-value"
+                >$<span id="usdBalance">10,000.00</span></span
+              >
+            </div>
+            <div class="balance-row">
+              <span class="balance-label"
+                ><span id="coinBalance">BTC</span> 餘額</span
+              >
+              <span class="balance-value"
+                ><span id="cryptoBalance">0.5000</span></span
+              >
+            </div>
+          </div>
+
+          <!-- 交易表單 -->
+          <div class="ui form" style="margin-top: 2rem">
+            <div class="two fields">
+              <div class="field">
+                <label>金額 (USD)</label>
+                <div class="ui input amount-input">
+                  <input
+                    type="number"
+                    id="amountInput"
+                    placeholder="$ 輸入金額"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              <div class="field">
+                <label>數量</label>
+                <div class="ui labeled input quantity-input">
+                  <input
+                    type="number"
+                    id="quantityInput"
+                    placeholder="輸入數量"
+                    min="0"
+                    step="0.00000001"
+                  />
+                  <div class="ui label quantity-label" id="quantityLabel">
+                    BTC
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 交易類型選擇 -->
+            <div class="field">
+              <label>交易類型</label>
+              <div class="ui buttons fluid">
+                <button id="marketBtn" class="ui button active">
+                  市價交易
+                </button>
+                <button id="limitBtn" class="ui button">限價交易</button>
+              </div>
+            </div>
+
+            <!-- 限價交易額外欄位 -->
+            <div id="limitPriceField" class="field" style="display: none">
+              <label>限價 (USD)</label>
+              <div class="ui input amount-input">
+                <input
+                  type="number"
+                  id="limitPriceInput"
+                  placeholder="$ 設定限價"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            <!-- 交易摘要 -->
+            <div id="tradeSummary" class="ui segment" style="display: none">
+              <h4 style="margin-bottom: 1rem; color: #e2e8f0">交易摘要</h4>
+              <div class="summary-item">
+                <span class="summary-label">交易幣種</span>
+                <span class="summary-value" id="summarySymbol">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">交易數量</span>
+                <span class="summary-value" id="summaryQuantity">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">手續費 (0.1%)</span>
+                <span class="summary-value" id="summaryFee">$0</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">總價值</span>
+                <span class="summary-value" id="summaryTotal">$0</span>
+              </div>
+            </div>
+
+            <!-- 交易按鈕 -->
+            <div class="ui equal width grid" style="margin-top: 2rem">
+              <div class="row">
+                <div class="column">
+                  <button
+                    id="buyBtn"
+                    class="ui massive fluid button trade-button buy-button"
+                    disabled
+                  >
+                    買入
+                  </button>
+                </div>
+                <div class="column">
+                  <button
+                    id="sellBtn"
+                    class="ui massive fluid button trade-button sell-button"
+                    disabled
+                  >
+                    賣出
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semantic UI JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+
+    <script>
+      // 模擬價格資料
+      const mockPrices = {
+        BTC: { price: 43250.5 },
+        ETH: { price: 2650.3 },
+        BNB: { price: 315.8 },
+        ADA: { price: 0.485 },
+        DOT: { price: 6.24 },
+        LINK: { price: 14.67 },
+        LTC: { price: 72.15 },
+        BCH: { price: 245.3 },
+      };
+
+      // 應用程式狀態
+      let appState = {
+        selectedCoin: "",
+        tradeType: "market",
+        currentPrice: 0,
+      };
+
+      // 初始化
+      $(document).ready(function () {
+        initializeEventListeners();
+        $(".ui.dropdown").dropdown();
+      });
+
+      function initializeEventListeners() {
+        // 幣種選擇
+        $("#coinSelect").change(function () {
+          const symbol = $(this).val();
+          selectCoin(symbol);
+        });
+
+        // 交易類型切換
+        $("#marketBtn, #limitBtn").click(function () {
+          const isMarket = $(this).attr("id") === "marketBtn";
+          toggleTradeType(isMarket);
+        });
+
+        // 金額和數量輸入
+        $("#amountInput").on("input", function () {
+          calculateFromAmount();
+          updateTradeSummary();
+        });
+
+        $("#quantityInput").on("input", function () {
+          calculateFromQuantity();
+          updateTradeSummary();
+        });
+
+        // 交易按鈕
+        $("#buyBtn").click(function () {
+          executeTrade("buy");
+        });
+
+        $("#sellBtn").click(function () {
+          executeTrade("sell");
+        });
+      }
+
+      function selectCoin(symbol) {
+        if (!symbol) return;
+
+        appState.selectedCoin = symbol;
+        const priceData = mockPrices[symbol];
+        appState.currentPrice = priceData.price;
+
+        // 更新價格顯示
+        $("#currentPrice").text(
+          `$${priceData.price.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+          })}`
+        );
+        $("#priceDisplay").show();
+        $("#balanceInfo").show();
+        $("#quantityLabel").text(symbol);
+        $("#coinBalance").text(symbol);
+
+        updateTradeButtons();
+        clearInputs();
+      }
+
+      function toggleTradeType(isMarket) {
+        appState.tradeType = isMarket ? "market" : "limit";
+
+        if (isMarket) {
+          $("#marketBtn").addClass("active");
+          $("#limitBtn").removeClass("active");
+          $("#limitPriceField").hide();
+        } else {
+          $("#limitBtn").addClass("active");
+          $("#marketBtn").removeClass("active");
+          $("#limitPriceField").show();
+        }
+      }
+
+      function calculateFromAmount() {
+        const amount = parseFloat($("#amountInput").val()) || 0;
+        if (amount > 0 && appState.currentPrice > 0) {
+          const quantity = amount / appState.currentPrice;
+          $("#quantityInput").val(quantity.toFixed(8));
+        }
+      }
+
+      function calculateFromQuantity() {
+        const quantity = parseFloat($("#quantityInput").val()) || 0;
+        if (quantity > 0 && appState.currentPrice > 0) {
+          const amount = quantity * appState.currentPrice;
+          $("#amountInput").val(amount.toFixed(2));
+        }
+      }
+
+      function updateTradeSummary() {
+        const amount = parseFloat($("#amountInput").val()) || 0;
+        const quantity = parseFloat($("#quantityInput").val()) || 0;
+
+        if (amount > 0 && quantity > 0 && appState.selectedCoin) {
+          const fee = amount * 0.001; // 0.1% 手續費
+
+          $("#summarySymbol").text(appState.selectedCoin);
+          $("#summaryQuantity").text(quantity.toFixed(8));
+          $("#summaryTotal").text(`$${amount.toFixed(2)}`);
+          $("#summaryFee").text(`$${fee.toFixed(2)}`);
+
+          $("#tradeSummary").show();
+        } else {
+          $("#tradeSummary").hide();
+        }
+      }
+
+      function updateTradeButtons() {
+        const canTrade =
+          appState.selectedCoin &&
+          (parseFloat($("#amountInput").val()) > 0 ||
+            parseFloat($("#quantityInput").val()) > 0);
+
+        $("#buyBtn, #sellBtn").prop("disabled", !canTrade);
+      }
+
+      function executeTrade(type) {
+        const amount = parseFloat($("#amountInput").val()) || 0;
+        const quantity = parseFloat($("#quantityInput").val()) || 0;
+
+        if (amount <= 0 || quantity <= 0) {
+          showNotification("請輸入有效的金額和數量", "error");
+          return;
+        }
+
+        // 模擬交易執行
+        const button = type === "buy" ? $("#buyBtn") : $("#sellBtn");
+        button.addClass("loading");
+
+        setTimeout(() => {
+          button.removeClass("loading");
+          showNotification(
+            `${type === "buy" ? "買入" : "賣出"} ${quantity.toFixed(8)} ${
+              appState.selectedCoin
+            } 成功！`,
+            "success"
+          );
+          clearInputs();
+          $("#tradeSummary").hide();
+
+          // 更新餘額 (模擬)
+          updateBalances(type, amount, quantity);
+        }, 2000);
+      }
+
+      function updateBalances(type, amount, quantity) {
+        const currentUSD = parseFloat(
+          $("#usdBalance").text().replace(/,/g, "")
+        );
+        const currentCrypto = parseFloat($("#cryptoBalance").text());
+
+        if (type === "buy") {
+          $("#usdBalance").text(
+            (currentUSD - amount).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+            })
+          );
+          $("#cryptoBalance").text((currentCrypto + quantity).toFixed(4));
+        } else {
+          $("#usdBalance").text(
+            (currentUSD + amount).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+            })
+          );
+          $("#cryptoBalance").text((currentCrypto - quantity).toFixed(4));
+        }
+      }
+
+      function clearInputs() {
+        $("#amountInput, #quantityInput").val("");
+        updateTradeButtons();
+      }
+
+      function showNotification(message, type) {
+        const className = type === "success" ? "" : "error";
+
+        $("body").append(`
+                <div class="notification ${className}">
+                    ${message}
+                </div>
+            `);
+
+        setTimeout(() => {
+          $(".notification").fadeOut(() => {
+            $(".notification").remove();
+          });
+        }, 3000);
+      }
+
+      // 即時更新交易按鈕狀態
+      $("#amountInput, #quantityInput").on("input", updateTradeButtons);
+    </script>
+  </body>
+</html>

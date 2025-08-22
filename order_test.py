@@ -17,20 +17,25 @@ currencies = client.get_currencies()
 trande_pairs = client.get_trading_pairs()
 
 # 查詢交易對的價格
-# pairs_price = client.get_tickers(pair="ETH_USDT")
+pairs_price = client.get_tickers(pair="ETH_TWD")
+
+last_price = pairs_price["data"]["lastPrice"].split(".")[0]
+
 
 # 查詢交易對的成交紀錄
 # pairs_trade = client.get_trades(pair="ETH_TWD")
 
-# 查詢帳戶餘額
-# balance = client.get_account_balance()
 
-# balance_dict = {}
-# for currency in balance["data"]:
-#     if currency["available"] != "0":
-#         if "balance" not in balance_dict:
-#             balance_dict["balance"] = {}
-#         balance_dict["balance"][currency["currency"]] = currency["available"]
+# 查詢帳戶餘額
+balance = client.get_account_balance()
+
+balance_dict = {}
+for currency in balance["data"]:
+    if currency["available"] != "0":
+        if "balance" not in balance_dict:
+            balance_dict["balance"] = {}
+        balance_dict["balance"][currency["currency"]] = currency["available"]
+print(balance_dict)
 
 # with open("balance.json", "w") as f:
 #     json.dump(balance_dict, f, indent=4)
