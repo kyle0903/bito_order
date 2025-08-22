@@ -14,6 +14,8 @@ client = BitoproRestfulClient(api_key, api_secret)
 # 查詢支援的交易幣別
 currencies = client.get_currencies()
 
+trande_pairs = client.get_trading_pairs()
+
 # 查詢交易對的價格
 # pairs_price = client.get_tickers(pair="ETH_USDT")
 
@@ -34,10 +36,7 @@ currencies = client.get_currencies()
 #     json.dump(balance_dict, f, indent=4)
 
 # 查詢歷史加值紀錄
-history_deposit = client.get_deposit_history(currency="TWD")
-
-with open("history_deposit.json", "w") as f:
-    json.dump(history_deposit, f, indent=4)
+# history_deposit = client.get_deposit_history(currency="TWD")
 
 # print(history_deposit)
 
