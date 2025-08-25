@@ -1,16 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Header,
-  Icon,
-  Form,
-  Button,
-  Segment,
-  Grid,
-  Dropdown,
-  Input,
-  Label,
-} from "semantic-ui-react";
+import React, { useState } from "react";
+import { Icon, Form, Button, Grid, Dropdown, Input } from "semantic-ui-react";
 import PriceDisplay from "./components/PriceDisplay";
 import BalanceInfo from "./components/BalanceInfo";
 import TradeSummary from "./components/TradeSummary";
@@ -177,10 +166,10 @@ function App() {
     <div className="main-container">
       <div className="trading-card">
         <div className="card-content">
-          <Header as="h1" textAlign="center" className="main-title">
+          <h1 className="main-title">
             <Icon name="chart line" style={{ color: "#3b82f6" }} />
             Crypto Exchange
-          </Header>
+          </h1>
 
           {/* 幣種選擇 */}
           <Form>
@@ -232,7 +221,7 @@ function App() {
               </Form.Field>
               <Form.Field>
                 <label>數量</label>
-                <div className="ui labeled input quantity-input">
+                <div className="ui labeled quantity-input">
                   <input
                     type="number"
                     placeholder="輸入數量"
@@ -241,7 +230,7 @@ function App() {
                       calculateFromQuantity(parseFloat(e.target.value) || 0)
                     }
                     min="0"
-                    step="0.00000001"
+                    step="0.000001"
                   />
                   <div className="ui label quantity-label">
                     {appState.selectedCoin || "BTC"}
