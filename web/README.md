@@ -1,130 +1,113 @@
-# 加密貨幣交易平台 (React Version)
+# BitoPro Trading Dashboard
 
-這是一個使用 React + Semantic UI React 構建的加密貨幣交易平台前端介面。
+A modern, professional crypto asset management and trading interface for BitoPro exchange.
 
-## 功能特色
+## Features
 
-- 🪙 支援多種加密貨幣交易 (BTC, ETH, BNB, ADA, DOT, LINK, LTC, BCH)
-- 💰 即時價格顯示
-- 📊 餘額管理
-- 🔄 市價/限價交易
-- 📱 響應式設計
-- 🎨 現代化 UI 設計
+- **Asset Overview**: Real-time portfolio value and asset tracking
+- **Trading Interface**: Place market and limit orders
+- **Order History**: View and track all your trades
+- **Clean Design**: Minimal, efficiency-focused UI inspired by Linear and Stripe
 
-## 技術棧
+## Design Philosophy
 
-- **前端框架**: React 18
-- **UI 庫**: Semantic UI React
-- **樣式**: CSS + Semantic UI CSS
-- **構建工具**: Create React App
+- **Tool-oriented**: Built for users with trading experience
+- **Neutral color palette**: Professional appearance with low-saturation accent colors
+- **Functional color usage**: Colors indicate status and price movements
+- **No Web3 aesthetics**: Clean, modern design without excessive styling
 
-## 安裝與運行
+## Tech Stack
 
-### 1. 安裝依賴
+- **Next.js 14**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **BitoPro API v3**: Cryptocurrency exchange integration
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- BitoPro account and API credentials
+
+### Installation
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. 啟動開發伺服器
+2. Configure environment variables:
 
 ```bash
-npm start
+cp .env.example .env
 ```
 
-應用將在 `http://localhost:3000` 啟動。
+Edit `.env` and add your BitoPro API credentials:
 
-### 3. 構建生產版本
+```
+BITOPRO_API_KEY=your_api_key_here
+BITOPRO_API_SECRET=your_api_secret_here
+```
+
+### Development
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Build
+
+Build for production:
 
 ```bash
 npm run build
+npm start
 ```
 
-## 專案結構
+## Project Structure
 
 ```
-src/
-├── components/           # React 組件
-│   ├── PriceDisplay.js  # 價格顯示組件
-│   ├── BalanceInfo.js   # 餘額資訊組件
-│   ├── TradeSummary.js  # 交易摘要組件
-│   └── Notification.js  # 通知組件
-├── App.js               # 主應用組件
-├── index.js             # 應用入口
-└── index.css            # 全域樣式
+web/
+├── app/                  # Next.js App Router pages
+│   ├── api/             # API routes
+│   ├── trading/         # Trading interface
+│   ├── history/         # Order history
+│   └── settings/        # Configuration
+├── components/          # React components
+│   ├── Button.tsx
+│   ├── Card.tsx
+│   ├── Input.tsx
+│   ├── Select.tsx
+│   ├── Sidebar.tsx
+│   └── Toast.tsx
+├── lib/                 # Utilities and API client
+│   └── bitopro.ts      # BitoPro API wrapper
+└── styles/             # Global styles
 ```
 
-## 組件說明
+## API Integration
 
-### App.js
+The dashboard integrates with BitoPro API v3:
 
-- 主要應用邏輯
-- 狀態管理 (selectedCoin, tradeType, balances, etc.)
-- 交易功能實現
+- Account balance queries
+- Real-time price data
+- Order placement (market/limit)
+- Order history tracking
+- Active order management
 
-### PriceDisplay.js
+## Security Notes
 
-- 顯示所選加密貨幣的當前價格
-- 格式化價格顯示
+- Never commit your `.env` file
+- Keep API credentials secure
+- Use API keys with appropriate permissions
+- Consider IP whitelisting in BitoPro settings
 
-### BalanceInfo.js
+## License
 
-- 顯示 USD 和加密貨幣餘額
-- 支援動態更新
-
-### TradeSummary.js
-
-- 顯示交易摘要資訊
-- 計算手續費和總價值
-
-### Notification.js
-
-- 顯示成功/錯誤通知
-- 自動消失功能
-
-## 主要功能
-
-### 1. 幣種選擇
-
-- 支援 8 種主流加密貨幣
-- 即時價格更新
-
-### 2. 交易功能
-
-- 市價交易：按當前市價立即執行
-- 限價交易：設定目標價格執行
-
-### 3. 數量計算
-
-- 金額 ↔ 數量 雙向自動計算
-- 支援精確到小數點後 8 位
-
-### 4. 餘額管理
-
-- 即時更新 USD 和加密貨幣餘額
-- 交易後自動調整餘額
-
-## 樣式特色
-
-- 深色主題設計
-- 漸層背景和邊框
-- 自訂一體成型的輸入框設計
-- 響應式佈局
-- 流暢的動畫效果
-
-## 開發說明
-
-這個專案從原本的 HTML + jQuery 版本轉換而來，主要改進：
-
-1. **現代化架構**: 使用 React hooks 進行狀態管理
-2. **組件化設計**: 將 UI 拆分為可複用的組件
-3. **更好的維護性**: 清晰的檔案結構和組件分離
-4. **TypeScript 友好**: 可輕鬆遷移到 TypeScript
-
-## 後續開發
-
-- [ ] 加入 TypeScript 支援
-- [ ] 實作真實 API 串接
-- [ ] 加入圖表顯示
-- [ ] 加入交易歷史紀錄
-- [ ] 實作 WebSocket 即時價格更新
+Private use only.
