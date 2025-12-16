@@ -1,85 +1,44 @@
-import crypto from 'crypto';
-
-const API_BASE = 'https://api.bitopro.com/v3';
+// 使用官方 bitopro-api-node SDK
+// 參考: https://github.com/bitoex/bitopro-api-node
+const BitoPro = require('bitopro-api-node');
 
 interface BitoProConfig {
   apiKey: string;
   apiSecret: string;
+  email: string;
 }
 
 class BitoProAPI {
-  private apiKey: string;
-  private apiSecret: string;
+  private client: any;
 
   constructor(config: BitoProConfig) {
-    this.apiKey = config.apiKey;
-    this.apiSecret = config.apiSecret;
-  }
-
-  private generateSignature(payload: string): string {
-    const hmac = crypto.createHmac('sha384', this.apiSecret);
-    hmac.update(payload);
-    return hmac.digest('hex');
-  }
-
-  private async request(
-    method: string,
-    endpoint: string,
-    body?: any,
-    requiresAuth = false
-  ): Promise<any> {
-    const url = `${API_BASE}${endpoint}`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (requiresAuth) {
-      const nonce = Date.now().toString();
-      const payload = method === 'GET' ? nonce : nonce + JSON.stringify(body);
-      const signature = this.generateSignature(payload);
-
-      headers['X-BITOPRO-APIKEY'] = this.apiKey;
-      headers['X-BITOPRO-PAYLOAD'] = payload;
-      headers['X-BITOPRO-SIGNATURE'] = signature;
-    }
-
-    const options: RequestInit = {
-      method,
-      headers,
-    };
-
-    if (body && method !== 'GET') {
-      options.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'API request failed');
-    }
-
-    return response.json();
+    // 根據官方 SDK 初始化方式
+    this.client = new BitoPro(config.apiKey, config.apiSecret, config.email);
   }
 
   // 獲取帳戶餘額
   async getAccountBalance() {
-    return this.request('GET', '/accounts/balance', undefined, true);
+    return this.client.getAccountBalances();
   }
 
-  // 獲取交易對資訊
+  // 獲取交易對資訊 (透過 getTickers 取得所有交易對)
   async getTradingPairs() {
-    return this.request('GET', '/provisioning/trading-pairs');
+    return this.client.getTickers();
   }
 
   // 獲取訂單簿
   async getOrderBook(pair: string) {
-    return this.request('GET', `/order-book/${pair}`);
+    return this.client.getOrderBook(pair);
   }
 
   // 獲取最新成交價
   async getTicker(pair: string) {
-    return this.request('GET', `/tickers/${pair}`);
+    return this.client.getTickers(pair);
+  }
+
+  // 獲取成交紀錄
+  async getTrades(pair: string) {
+    return this.client.getTrades(pair);
   }
 
   // 建立訂單
@@ -90,38 +49,36 @@ class BitoProAPI {
     price?: string;
     type: 'limit' | 'market';
   }) {
-    const body = {
+    const order = {
       pair: params.pair,
       action: params.action,
       amount: params.amount,
       price: params.price,
-      type: params.type,
       timestamp: Date.now(),
+      type: params.type,
     };
 
-    return this.request('POST', '/orders', body, true);
+    return this.client.createOrder(order);
   }
 
   // 取消訂單
   async cancelOrder(orderId: string, pair: string) {
-    return this.request(
-      'DELETE',
-      `/orders/${pair}/${orderId}`,
-      undefined,
-      true
-    );
+    return this.client.cancelOrder(pair, orderId);
+  }
+
+  // 獲取單一訂單
+  async getOrder(pair: string, orderId: string) {
+    return this.client.getOrder(pair, orderId);
   }
 
   // 獲取訂單歷史
-  async getOrderHistory(pair?: string) {
-    const endpoint = pair ? `/orders/history/${pair}` : '/orders/history';
-    return this.request('GET', endpoint, undefined, true);
+  async getOrderHistory() {
+    return this.client.getOrderHistory();
   }
 
   // 獲取活躍訂單
-  async getActiveOrders(pair?: string) {
-    const endpoint = pair ? `/orders/${pair}` : '/orders';
-    return this.request('GET', endpoint, undefined, true);
+  async getActiveOrders(pair: string, activeOnly = true, page = 1) {
+    return this.client.getOrders(pair, activeOnly, page);
   }
 }
 

@@ -5,8 +5,9 @@ export async function POST(request: Request) {
   try {
     const apiKey = process.env.BITOPRO_API_KEY;
     const apiSecret = process.env.BITOPRO_API_SECRET;
+    const email = process.env.BITOPRO_EMAIL;
 
-    if (!apiKey || !apiSecret) {
+    if (!apiKey || !apiSecret || !email) {
       return NextResponse.json(
         { error: 'API credentials not configured' },
         { status: 500 }
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const api = new BitoProAPI({ apiKey, apiSecret });
+    const api = new BitoProAPI({ apiKey, apiSecret, email });
     const order = await api.createOrder({
       pair,
       action,

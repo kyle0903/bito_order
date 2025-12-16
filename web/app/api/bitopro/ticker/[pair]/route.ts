@@ -8,8 +8,9 @@ export async function GET(
   try {
     const apiKey = process.env.BITOPRO_API_KEY || '';
     const apiSecret = process.env.BITOPRO_API_SECRET || '';
+    const email = process.env.BITOPRO_EMAIL || '';
 
-    const api = new BitoProAPI({ apiKey, apiSecret });
+    const api = new BitoProAPI({ apiKey, apiSecret, email });
     const ticker = await api.getTicker(params.pair);
 
     return NextResponse.json(ticker);
