@@ -5,7 +5,7 @@ export async function GET() {
   try {
     // 從 Yahoo Finance 取得 USD/TWD 匯率
     const quote = await yahooFinance.quote('USDTWD=X');
-    
+
     const rate = (quote as any)?.regularMarketPrice;
     if (!quote || !rate) {
       return NextResponse.json(
@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     const quoteData = quote as any;
-    
+
     return NextResponse.json({
       success: true,
       data: {
@@ -28,7 +28,7 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch USD/TWD rate:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch exchange rate',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

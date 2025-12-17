@@ -23,10 +23,10 @@ class BitoProAPI {
 
   // 生成認證 headers
   private generateAuthHeaders(body?: object) {
-    const payload = body 
+    const payload = body
       ? Buffer.from(JSON.stringify(body)).toString('base64')
       : Buffer.from(JSON.stringify({ identity: this.email, nonce: Date.now() })).toString('base64');
-    
+
     const signature = crypto
       .createHmac('sha384', this.apiSecret)
       .update(payload)
@@ -48,41 +48,32 @@ class BitoProAPI {
       method: 'GET',
       headers: this.generateAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch balance: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
   // 獲取所有訂單（包含歷史）
   // BitoPro API 限制：startTimestamp 和 endTimestamp 最多相差 90 天
   async getAllOrders(
-    pair: string, 
-    statusKind: 'ALL' | 'OPEN' | 'DONE' = 'ALL', 
-    limit: number = 100,
-    startTimestamp?: number,
-    endTimestamp?: number
+    pair: string,
+    statusKind: 'ALL' | 'OPEN' | 'DONE' = 'ALL',
+    limit: number = 100
   ) {
     let url = `${BASE_URL}/orders/all/${pair}?statusKind=${statusKind}&limit=${limit}`;
-    
-    if (startTimestamp) {
-      url += `&startTimestamp=${startTimestamp}`;
-    }
-    if (endTimestamp) {
-      url += `&endTimestamp=${endTimestamp}`;
-    }
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: this.generateAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch orders: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
@@ -104,11 +95,11 @@ class BitoProAPI {
       headers: this.generateAuthHeaders(body),
       body: JSON.stringify(body),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to create order: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
@@ -118,11 +109,11 @@ class BitoProAPI {
       method: 'DELETE',
       headers: this.generateAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to cancel order: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
@@ -132,11 +123,11 @@ class BitoProAPI {
       method: 'GET',
       headers: this.generateAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to get order: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
@@ -145,44 +136,44 @@ class BitoProAPI {
   // 獲取交易對資訊
   static async getTradingPairs() {
     const response = await fetch(`${BASE_URL}/tickers`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch trading pairs: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
   // 獲取最新成交價
   static async getTicker(pair: string) {
     const response = await fetch(`${BASE_URL}/tickers/${pair}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch ticker: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
   // 獲取訂單簿
   static async getOrderBook(pair: string, limit: number = 5) {
     const response = await fetch(`${BASE_URL}/order-book/${pair}?limit=${limit}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch order book: ${response.status}`);
     }
-    
+
     return response.json();
   }
 
   // 獲取成交紀錄
   static async getTrades(pair: string) {
     const response = await fetch(`${BASE_URL}/trades/${pair}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch trades: ${response.status}`);
     }
-    
+
     return response.json();
   }
 }

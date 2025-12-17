@@ -9,8 +9,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BitoPro Trading Dashboard",
-  description: "Personal crypto asset management and trading interface",
+  title: "A CUBE",
+  description: "個人資產管理及交易界面",
+  icons: {
+    icon: "/Logo.png"
+  },
 };
 
 export default function RootLayout({

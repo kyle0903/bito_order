@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navigation = [
@@ -16,10 +17,18 @@ export default function Sidebar() {
   return (
     <aside className="w-64 border-r border-neutral-200 bg-white flex flex-col">
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-neutral-200">
-        <h1 className="text-lg font-semibold text-neutral-900 tracking-tight">
-          幣託資產管理
-        </h1>
+      <div className="h-16 flex items-center px-5 border-b border-neutral-200">
+        <Image
+          src="/Logo.png"
+          alt="A CUBE Logo"
+          width={75}
+          height={75}
+          className="rounded-lg object-cover"
+          priority
+        />
+        <span className="text-xl font-bold text-neutral-900 tracking-tight">
+          A CUBE
+        </span>
       </div>
 
       {/* Navigation */}
@@ -32,10 +41,9 @@ export default function Sidebar() {
               href={item.href}
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                ${
-                  isActive
-                    ? 'bg-neutral-900 text-white'
-                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                ${isActive
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                 }
               `}
             >

@@ -9,7 +9,7 @@ import { useCredentials } from '@/hooks/useCredentials';
 
 export default function SettingsPage() {
   const { credentials, isConfigured, isLoading, saveCredentials, clearCredentials } = useCredentials();
-  
+
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +31,7 @@ export default function SettingsPage() {
   };
 
   const handleClear = () => {
-    if (confirm('Are you sure you want to clear your API credentials?')) {
+    if (confirm('確定要清除您的 API 憑證嗎？')) {
       clearCredentials();
       setApiKey('');
       setApiSecret('');
@@ -43,73 +43,72 @@ export default function SettingsPage() {
     <DashboardLayout title="設定">
       <div className="max-w-2xl space-y-6">
 
-        {/* API Configuration */}
+        {/* API 設定 */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-neutral-900">API Configuration</h3>
+                <h3 className="text-base font-semibold text-neutral-900">API 設定</h3>
                 <p className="text-sm text-neutral-500 mt-1">
-                  Configure your BitoPro API credentials
+                  設定您的 BitoPro API 憑證
                 </p>
               </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded ${
-                isLoading ? 'bg-neutral-100 text-neutral-600' :
-                isConfigured ? 'bg-success-50 text-success-600' : 'bg-warning-50 text-warning-600'
-              }`}>
-                {isLoading ? 'Loading...' : isConfigured ? 'Configured' : 'Not Configured'}
+              <span className={`px-2 py-1 text-xs font-medium rounded ${isLoading ? 'bg-neutral-100 text-neutral-600' :
+                  isConfigured ? 'bg-success-50 text-success-600' : 'bg-warning-50 text-warning-600'
+                }`}>
+                {isLoading ? '載入中...' : isConfigured ? '已設定' : '未設定'}
               </span>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
-              label="API Key"
+              label="API 金鑰"
               type="text"
-              placeholder="Enter your API key"
+              placeholder="輸入您的 API 金鑰"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              helperText="You can find your API key in BitoPro account settings"
+              helperText="您可以在 BitoPro 帳戶設定中找到您的 API 金鑰"
             />
             <Input
-              label="API Secret"
+              label="API 私鑰"
               type="password"
-              placeholder="Enter your API secret"
+              placeholder="輸入您的 API 私鑰"
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
-              helperText="Keep your API secret secure and never share it"
+              helperText="請妥善保管您的 API 私鑰，切勿分享給他人"
             />
             <Input
-              label="Email"
+              label="電子郵件"
               type="email"
-              placeholder="Enter your BitoPro email"
+              placeholder="輸入您的 BitoPro 電子郵件"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              helperText="The email associated with your BitoPro account"
+              helperText="與您 BitoPro 帳戶關聯的電子郵件"
             />
             <div className="flex items-center gap-3 pt-2">
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleSave}
                 disabled={!apiKey || !apiSecret || !email}
               >
-                {saveSuccess ? '✓ Saved!' : 'Save Credentials'}
+                {saveSuccess ? '✓ 已儲存！' : '儲存憑證'}
               </Button>
               {isConfigured && (
                 <Button variant="secondary" onClick={handleClear}>
-                  Clear Credentials
+                  清除憑證
                 </Button>
               )}
             </div>
             <p className="text-xs text-neutral-500">
-              Your credentials are stored locally in your browser and encrypted.
+              您的憑證將加密儲存在瀏覽器本機中。
             </p>
           </CardContent>
         </Card>
 
-        {/* Trading Preferences */}
+        {/* 交易偏好設定 */}
         <Card>
           <CardHeader>
-            <h3 className="text-base font-semibold text-neutral-900">Trading Preferences</h3>
+            <h3 className="text-base font-semibold text-neutral-900">交易偏好設定</h3>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -119,8 +118,8 @@ export default function SettingsPage() {
                   className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
                 />
                 <div>
-                  <p className="text-sm font-medium text-neutral-900">Enable order confirmation</p>
-                  <p className="text-xs text-neutral-500">Confirm before placing orders</p>
+                  <p className="text-sm font-medium text-neutral-900">啟用訂單確認</p>
+                  <p className="text-xs text-neutral-500">下單前先確認</p>
                 </div>
               </label>
             </div>
@@ -132,27 +131,27 @@ export default function SettingsPage() {
                   defaultChecked
                 />
                 <div>
-                  <p className="text-sm font-medium text-neutral-900">Enable notifications</p>
-                  <p className="text-xs text-neutral-500">Show toast notifications for order status</p>
+                  <p className="text-sm font-medium text-neutral-900">啟用通知</p>
+                  <p className="text-xs text-neutral-500">顯示訂單狀態的通知訊息</p>
                 </div>
               </label>
             </div>
           </CardContent>
         </Card>
 
-        {/* About */}
+        {/* 關於 */}
         <Card>
           <CardHeader>
-            <h3 className="text-base font-semibold text-neutral-900">About</h3>
+            <h3 className="text-base font-semibold text-neutral-900">關於</h3>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-neutral-600">Version</span>
+                <span className="text-neutral-600">版本</span>
                 <span className="font-medium text-neutral-900">1.0.0</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">API Version</span>
+                <span className="text-neutral-600">API 版本</span>
                 <span className="font-medium text-neutral-900">v3</span>
               </div>
             </div>

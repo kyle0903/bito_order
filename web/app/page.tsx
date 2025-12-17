@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
-import Link from 'next/link';
 
 // Notion 資料介面
 interface NotionAsset {
@@ -41,17 +40,17 @@ export default function Home() {
   const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean }> => {
     // TWD 本身價值為 1，無變化
     if (symbol === 'TWD') return { price: 1, priceChange24hr: 0, hasTWDPair: true };
-    
+
     // 如果是股票，從 Yahoo Finance 取得價格
     if (STOCK_SYMBOLS.includes(symbol.toUpperCase())) {
       try {
         const response = await fetch(`/api/yahoo/${symbol.toUpperCase()}`);
         if (!response.ok) return { price: 0, priceChange24hr: 0, hasTWDPair: false };
-        
+
         const data = await response.json();
         const twdPrice = data.data?.priceTWD || 0;
         const priceChangePercent = data.data?.priceChangePercent || 0;
-        
+
         return {
           price: twdPrice,
           priceChange24hr: priceChangePercent,
@@ -61,13 +60,13 @@ export default function Home() {
         return { price: 0, priceChange24hr: 0, hasTWDPair: false };
       }
     }
-    
+
     // 其他加密貨幣從 BitoPro 取得價格
     try {
       const pair = `${symbol.toLowerCase()}_twd`;
       const response = await fetch(`/api/bitopro/ticker/${pair}`);
       if (!response.ok) return { price: 0, priceChange24hr: 0, hasTWDPair: false };
-      
+
       const data = await response.json();
       const price = parseFloat(data.data?.lastPrice) || 0;
       return {
@@ -85,10 +84,10 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 從 Notion 取得資產資料
       const response = await fetch('/api/notion/assets');
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch assets from Notion');
@@ -103,7 +102,7 @@ export default function Home() {
           const symbol = asset.target.toUpperCase();
           const { price, priceChange24hr, hasTWDPair } = await fetchTickerData(symbol);
           const valueTWD = hasTWDPair ? asset.totalQuantity * price : 0;
-          
+
           return {
             symbol,
             name: symbol,
@@ -155,21 +154,38 @@ export default function Home() {
   const totalValueTWD = assets
     .filter(asset => asset.hasTWDPair)
     .reduce((sum, asset) => sum + asset.valueTWD, 0);
-  
+
+  // 計算總成本
+  const totalCost = assets
+    .filter(asset => asset.hasTWDPair)
+    .reduce((sum, asset) => sum + asset.totalAmount, 0);
+
+  // 計算總損益和損益率
+  const totalProfitLoss = totalValueTWD - totalCost;
+  const totalProfitLossRate = totalCost > 0
+    ? ((totalValueTWD - totalCost) / totalCost) * 100
+    : 0;
+
   // 計算總資產價值 (USD)
-  const totalValueUSD = exchangeRates?.USD && exchangeRates.USD > 0 
-    ? totalValueTWD / exchangeRates.USD 
+  const totalValueUSD = exchangeRates?.USD && exchangeRates.USD > 0
+    ? totalValueTWD / exchangeRates.USD
     : 0;
 
   // 計算總資產的24小時加權平均變化百分比
   const totalChange24hr = totalValueTWD > 0
     ? assets
-        .filter(asset => asset.hasTWDPair)
-        .reduce((weightedSum, asset) => {
-          const weight = asset.valueTWD / totalValueTWD;
-          return weightedSum + (asset.priceChange24hr * weight);
-        }, 0)
+      .filter(asset => asset.hasTWDPair)
+      .reduce((weightedSum, asset) => {
+        const weight = asset.valueTWD / totalValueTWD;
+        return weightedSum + (asset.priceChange24hr * weight);
+      }, 0)
     : 0;
+
+  // 計算單一資產的損益率
+  const getProfitLossRate = (asset: AssetDisplay): number => {
+    if (!asset.hasTWDPair || asset.totalAmount === 0) return 0;
+    return ((asset.valueTWD - asset.totalAmount) / asset.totalAmount) * 100;
+  };
 
   // 統計有/無價格的資產數量
   const assetsWithoutPrice = assets.filter(a => !a.hasTWDPair);
@@ -184,11 +200,10 @@ export default function Home() {
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-medium text-neutral-500">總資產價值</p>
               {!loading && totalChange24hr !== 0 && (
-                <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                  totalChange24hr > 0 
-                    ? 'bg-success-50 text-success-600' 
-                    : 'bg-danger-50 text-danger-600'
-                }`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded ${totalChange24hr > 0
+                  ? 'bg-success-50 text-success-600'
+                  : 'bg-danger-50 text-danger-600'
+                  }`}>
                   {totalChange24hr > 0 ? '+' : ''}{totalChange24hr.toFixed(2)}% (24h)
                 </span>
               )}
@@ -210,6 +225,37 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* 總損益卡片 */}
+        <Card>
+          <CardContent className="py-5">
+            <p className="text-sm font-medium text-neutral-500 mb-1">總損益</p>
+            {loading ? (
+              <p className="text-2xl font-semibold text-neutral-900">...</p>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <p className={`text-2xl font-semibold tabular-nums ${totalProfitLoss >= 0 ? 'text-success-600' : 'text-danger-600'
+                    }`}>
+                    {totalProfitLoss >= 0 ? '+' : ''}NT$ {totalProfitLoss.toLocaleString('en-US', {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
+                  </p>
+                  <span className={`text-sm font-semibold px-2 py-0.5 rounded ${totalProfitLossRate >= 0
+                    ? 'bg-success-50 text-success-600'
+                    : 'bg-danger-50 text-danger-600'
+                    }`}>
+                    {totalProfitLossRate >= 0 ? '+' : ''}{totalProfitLossRate.toFixed(2)}%
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-500 mt-1">
+                  總成本: NT$ {totalCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardContent className="py-5">
             <p className="text-sm font-medium text-neutral-500 mb-1">匯率</p>
@@ -217,8 +263,8 @@ export default function Home() {
               <p className="text-lg font-semibold text-neutral-900">Loading...</p>
             ) : exchangeRates.USD > 0 ? (
               <div className="text-sm font-semibold text-neutral-900 space-y-1">
-                <p className="tabular-nums">1 USD = NT$ {exchangeRates.USD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p className="tabular-nums text-xs text-neutral-500">USD/TWD Rate (Yahoo Finance)</p>
+                <p className="tabular-nums">1 USD = NT$ {exchangeRates.USD}</p>
+                <p className="tabular-nums text-xs text-neutral-500">USD/TWD</p>
               </div>
             ) : (
               <p className="text-lg font-semibold text-danger-600">Failed</p>
@@ -268,105 +314,126 @@ export default function Home() {
                   <span className="text-xs font-medium text-neutral-500 uppercase text-right w-24">數量</span>
                   <span className="text-xs font-medium text-neutral-500 uppercase text-right w-28">成本</span>
                   <span className="text-xs font-medium text-neutral-500 uppercase text-right min-w-[120px]">現值 (TWD)</span>
+                  <span className="text-xs font-medium text-neutral-500 uppercase text-right w-24">損益率</span>
                 </div>
               </div>
               {/* 資產列表 */}
               <div className="divide-y divide-neutral-200">
-              {assets.map((asset) => (
-                <div
-                  key={asset.symbol}
-                  className="px-6 py-4 flex items-center justify-between hover:bg-neutral-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      asset.hasTWDPair ? 'bg-primary-100' : 'bg-neutral-100'
-                    }`}>
-                      <span className={`text-sm font-semibold ${
-                        asset.hasTWDPair ? 'text-primary-600' : 'text-neutral-400'
-                      }`}>
-                        {asset.symbol.substring(0, 2)}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-neutral-900">{asset.symbol}</p>
-                        {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
-                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                            asset.priceChange24hr > 0 
-                              ? 'bg-success-50 text-success-600' 
-                              : 'bg-danger-50 text-danger-600'
+                {assets.map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    className="px-6 py-4 flex items-center justify-between hover:bg-neutral-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-100' : 'bg-neutral-100'
+                        }`}>
+                        <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-600' : 'text-neutral-400'
                           }`}>
-                            {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
-                          </span>
-                        )}
-                        {!asset.hasTWDPair && (
-                          <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">
-                            無價格
-                          </span>
-                        )}
+                          {asset.symbol.substring(0, 2)}
+                        </span>
                       </div>
-                      <div className="text-xs text-neutral-500">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-neutral-900">{asset.symbol}</p>
+                          {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0
+                              ? 'bg-success-50 text-success-600'
+                              : 'bg-danger-50 text-danger-600'
+                              }`}>
+                              {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
+                            </span>
+                          )}
+                          {!asset.hasTWDPair && (
+                            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">
+                              無價格
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-neutral-500">
+                          {asset.hasTWDPair ? (
+                            <>
+                              <p>NT$ {asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                              {exchangeRates?.USD && exchangeRates.USD > 0 && (
+                                <>
+                                  <p>≈ ${(asset.price / exchangeRates.USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</p>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-neutral-400">無法取得 TWD 交易對</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                      {/* 數量 */}
+                      <div className="text-right w-24">
+                        <p className="text-sm font-medium text-neutral-900 tabular-nums">
+                          {asset.quantity.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 8,
+                          })}
+                        </p>
+                      </div>
+
+                      {/* 成本 */}
+                      <div className="text-right w-28">
+                        <p className="text-sm font-medium text-neutral-700 tabular-nums">
+                          NT$ {asset.totalAmount.toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
+                        </p>
+                      </div>
+
+                      {/* 現值 */}
+                      <div className="text-right min-w-[120px]">
                         {asset.hasTWDPair ? (
                           <>
-                            <p>NT$ {asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-sm font-semibold text-neutral-900 tabular-nums">
+                              NT$ {asset.valueTWD.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
                             {exchangeRates?.USD && exchangeRates.USD > 0 && (
-                              <p>≈ ${(asset.price / exchangeRates.USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</p>
+                              <p className="text-xs text-neutral-500 tabular-nums">
+                                ≈ ${(asset.valueTWD / exchangeRates.USD).toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })} USD
+                              </p>
                             )}
                           </>
                         ) : (
-                          <span className="text-neutral-400">無法取得 TWD 交易對</span>
+                          <p className="text-sm font-medium text-neutral-400 tabular-nums">--</p>
+                        )}
+                      </div>
+
+                      {/* 損益率 */}
+                      <div className="text-right w-24">
+                        {asset.hasTWDPair && asset.totalAmount > 0 ? (
+                          <>
+                            <p className={`text-sm font-semibold tabular-nums ${getProfitLossRate(asset) >= 0 ? 'text-success-600' : 'text-danger-600'
+                              }`}>
+                              {getProfitLossRate(asset) >= 0 ? '+' : ''}{getProfitLossRate(asset).toFixed(2)}%
+                            </p>
+                            <p className={`text-xs tabular-nums ${(asset.valueTWD - asset.totalAmount) >= 0 ? 'text-success-500' : 'text-danger-500'
+                              }`}>
+                              {(asset.valueTWD - asset.totalAmount) >= 0 ? '+' : ''}NT$ {(asset.valueTWD - asset.totalAmount).toLocaleString('en-US', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0,
+                              })}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-medium text-neutral-400 tabular-nums">--</p>
                         )}
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-6">
-                    {/* 數量 */}
-                    <div className="text-right w-24">
-                      <p className="text-sm font-medium text-neutral-900 tabular-nums">
-                        {asset.quantity.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 8,
-                        })}
-                      </p>
-                    </div>
-
-                    {/* 成本 */}
-                    <div className="text-right w-28">
-                      <p className="text-sm font-medium text-neutral-700 tabular-nums">
-                        NT$ {asset.totalAmount.toLocaleString('en-US', {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        })}
-                      </p>
-                    </div>
-
-                    {/* 現值 */}
-                    <div className="text-right min-w-[120px]">
-                      {asset.hasTWDPair ? (
-                        <>
-                          <p className="text-sm font-semibold text-neutral-900 tabular-nums">
-                            NT$ {asset.valueTWD.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-                          {exchangeRates?.USD && exchangeRates.USD > 0 && (
-                            <p className="text-xs text-neutral-500 tabular-nums">
-                              ≈ ${(asset.valueTWD / exchangeRates.USD).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })} USD
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-sm font-medium text-neutral-400 tabular-nums">--</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
               </div>
 
               {/* 無價格資產提示 */}

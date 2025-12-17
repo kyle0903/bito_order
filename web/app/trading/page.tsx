@@ -22,15 +22,15 @@ interface BalanceDisplay {
 }
 
 const pairs = [
-  { value: '', label: 'Select trading pair' },
+  { value: '', label: '選擇交易對' },
   { value: 'BTC_TWD', label: 'BTC/TWD' },
   { value: 'ETH_TWD', label: 'ETH/TWD' },
   { value: 'ADA_TWD', label: 'ADA/TWD' }
 ];
 
 const orderTypes = [
-  { value: 'market', label: 'Market Order' },
-  { value: 'limit', label: 'Limit Order' },
+  { value: 'market', label: '市價單' },
+  { value: 'limit', label: '限價單' },
 ];
 
 export default function TradingPage() {
@@ -52,17 +52,17 @@ export default function TradingPage() {
       setBalanceLoading(false);
       return;
     }
-    
+
     try {
       setBalanceLoading(true);
       const response = await fetchWithCredentials('/api/bitopro/balance', credentials);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch balance');
       }
 
       const data = await response.json();
-      
+
       // 過濾並轉換餘額資料
       const formattedBalances: BalanceDisplay[] = (data.data || [])
         .filter((asset: Asset) => parseFloat(asset.amount) > 0.0001)
@@ -89,12 +89,12 @@ export default function TradingPage() {
       setCurrentPrice(null);
       return;
     }
-    
+
     try {
       setPriceLoading(true);
       const pairLower = tradingPair.toLowerCase();
       const response = await fetch(`/api/bitopro/ticker/${pairLower}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch price');
       }
@@ -120,7 +120,7 @@ export default function TradingPage() {
     // TODO: Implement BitoPro API call
     setTimeout(() => {
       setLoading(false);
-      alert('Order submitted (mock)');
+      alert('訂單已送出（模擬）');
     }, 1500);
   };
 
@@ -131,13 +131,13 @@ export default function TradingPage() {
         <div className="col-span-2">
           <Card>
             <CardHeader>
-              <h3 className="text-base font-semibold text-neutral-900">Place Order</h3>
+              <h3 className="text-base font-semibold text-neutral-900">下單</h3>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* 交易對選擇 */}
                 <Select
-                  label="Trading Pair"
+                  label="交易對"
                   options={pairs}
                   value={pair}
                   onChange={(e) => setPair(e.target.value)}
@@ -147,15 +147,15 @@ export default function TradingPage() {
                 {/* 當前價格 */}
                 {pair && (
                   <div className="p-4 bg-neutral-50 rounded-md">
-                    <p className="text-xs font-medium text-neutral-500 mb-1">Current Price</p>
+                    <p className="text-xs font-medium text-neutral-500 mb-1">目前價格</p>
                     {priceLoading ? (
-                      <p className="text-xl font-semibold text-neutral-400">Loading...</p>
+                      <p className="text-xl font-semibold text-neutral-400">載入中...</p>
                     ) : currentPrice !== null ? (
                       <p className="text-xl font-semibold text-neutral-900 tabular-nums">
                         NT$ {currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     ) : (
-                      <p className="text-xl font-semibold text-danger-600">Failed to load</p>
+                      <p className="text-xl font-semibold text-danger-600">載入失敗</p>
                     )}
                   </div>
                 )}
@@ -163,7 +163,7 @@ export default function TradingPage() {
                 {/* 訂單類型 */}
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Order Type
+                    訂單類型
                   </label>
                   <div className="flex gap-2">
                     {orderTypes.map((type) => (
@@ -173,10 +173,9 @@ export default function TradingPage() {
                         onClick={() => setOrderType(type.value)}
                         className={`
                           flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors
-                          ${
-                            orderType === type.value
-                              ? 'bg-neutral-900 text-white'
-                              : 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50'
+                          ${orderType === type.value
+                            ? 'bg-neutral-900 text-white'
+                            : 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50'
                           }
                         `}
                       >
@@ -189,7 +188,7 @@ export default function TradingPage() {
                 {/* 限價單價格 */}
                 {orderType === 'limit' && (
                   <Input
-                    label="Price"
+                    label="價格"
                     type="number"
                     placeholder="0.00"
                     value={price}
@@ -201,14 +200,14 @@ export default function TradingPage() {
 
                 {/* 數量 */}
                 <Input
-                  label="Amount"
+                  label="數量"
                   type="number"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   step="0.00000001"
                   required
-                  helperText="Enter the amount you want to trade"
+                  helperText="輸入您想交易的數量"
                 />
 
                 {/* 買入/賣出按鈕 */}
@@ -221,7 +220,7 @@ export default function TradingPage() {
                     onClick={() => setSide('buy')}
                     disabled={!pair || !amount}
                   >
-                    Buy
+                    買入
                   </Button>
                   <Button
                     type="submit"
@@ -231,7 +230,7 @@ export default function TradingPage() {
                     onClick={() => setSide('sell')}
                     disabled={!pair || !amount}
                   >
-                    Sell
+                    賣出
                   </Button>
                 </div>
               </form>
@@ -244,27 +243,27 @@ export default function TradingPage() {
           {/* 餘額卡片 */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <h3 className="text-sm font-semibold text-neutral-900">Balance</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">餘額</h3>
               <button
                 onClick={fetchBalance}
                 disabled={balanceLoading}
                 className="text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
               >
-                {balanceLoading ? 'Loading...' : 'Refresh'}
+                {balanceLoading ? '載入中...' : '重新整理'}
               </button>
             </CardHeader>
             <CardContent className="space-y-3">
               {!isConfigured ? (
                 <div className="text-center py-2">
-                  <p className="text-sm text-neutral-500 mb-2">Credentials not configured</p>
+                  <p className="text-sm text-neutral-500 mb-2">尚未設定 API 憑證</p>
                   <Link href="/settings" className="text-xs text-primary-600 hover:underline">
-                    Go to Settings
+                    前往設定
                   </Link>
                 </div>
               ) : balanceLoading ? (
-                <p className="text-sm text-neutral-500">Loading balances...</p>
+                <p className="text-sm text-neutral-500">載入餘額中...</p>
               ) : balances.length === 0 ? (
-                <p className="text-sm text-neutral-500">No balances found</p>
+                <p className="text-sm text-neutral-500">找不到餘額</p>
               ) : (
                 balances.map((item) => (
                   <div key={item.symbol} className="flex justify-between items-center">
@@ -285,23 +284,23 @@ export default function TradingPage() {
           {pair && amount && (
             <Card>
               <CardHeader>
-                <h3 className="text-sm font-semibold text-neutral-900">Order Summary</h3>
+                <h3 className="text-sm font-semibold text-neutral-900">訂單摘要</h3>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">Type</span>
+                  <span className="text-neutral-600">類型</span>
                   <span className="font-medium text-neutral-900">
-                    {orderType === 'market' ? 'Market' : 'Limit'}
+                    {orderType === 'market' ? '市價' : '限價'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">Amount</span>
+                  <span className="text-neutral-600">數量</span>
                   <span className="font-medium text-neutral-900 tabular-nums">
                     {amount}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">Est. Total</span>
+                  <span className="text-neutral-600">預估總額</span>
                   <span className="font-semibold text-neutral-900 tabular-nums">
                     NT$ {(parseFloat(amount || '0') * (currentPrice || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
