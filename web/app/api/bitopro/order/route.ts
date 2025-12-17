@@ -3,9 +3,9 @@ import BitoProAPI from '@/lib/bitopro';
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.BITOPRO_API_KEY;
-    const apiSecret = process.env.BITOPRO_API_SECRET;
-    const email = process.env.BITOPRO_EMAIL;
+    const apiKey = request.headers.get('X-API-Key');
+    const apiSecret = request.headers.get('X-API-Secret');
+    const email = request.headers.get('X-API-Email');
 
     if (!apiKey || !apiSecret || !email) {
       return NextResponse.json(

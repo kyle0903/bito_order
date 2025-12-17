@@ -1,16 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import BitoProAPI from '@/lib/bitopro';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const apiKey = process.env.BITOPRO_API_KEY;
-    const apiSecret = process.env.BITOPRO_API_SECRET;
-    const email = process.env.BITOPRO_EMAIL;
+    // 優先從 headers 讀取憑證
+    const apiKey = request.headers.get('X-API-Key');
+    const apiSecret = request.headers.get('X-API-Secret');
+    const email = request.headers.get('X-API-Email');
 
     if (!apiKey || !apiSecret || !email) {
       return NextResponse.json(
-        { error: 'API credentials not configured (need API_KEY, API_SECRET, and EMAIL)' },
-        { status: 500 }
+        { error: 'API credentials not configured. Please set up your credentials in Settings.' },
+        { status: 401 }
       );
     }
 
@@ -30,8 +31,9 @@ export async function GET() {
         details: errorMessage,
         type: error?.constructor?.name
       },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }
+
 

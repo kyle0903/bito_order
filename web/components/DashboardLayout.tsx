@@ -1,15 +1,17 @@
-'use client';
+  'use client';
 
 import Sidebar from './Sidebar';
 import Header from './Header';
 
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  title: string;
+}
+
 export default function DashboardLayout({
   children,
   title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}) {
+}: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-neutral-50">
       <Sidebar />
@@ -24,3 +26,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+

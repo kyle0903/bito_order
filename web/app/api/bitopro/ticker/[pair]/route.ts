@@ -6,19 +6,13 @@ export async function GET(
   { params }: { params: { pair: string } }
 ) {
   try {
-    const apiKey = process.env.BITOPRO_API_KEY || '';
-    const apiSecret = process.env.BITOPRO_API_SECRET || '';
-    const email = process.env.BITOPRO_EMAIL || '';
-
-    const api = new BitoProAPI({ apiKey, apiSecret, email });
-    const ticker = await api.getTicker(params.pair);
-
+    const ticker = await BitoProAPI.getTicker(params.pair);
     return NextResponse.json(ticker);
   } catch (error) {
     console.error('Failed to fetch ticker:', error);
     return NextResponse.json(
       { error: 'Failed to fetch ticker' },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }
