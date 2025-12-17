@@ -120,17 +120,6 @@ export default function Home() {
     }
   }, [credentials, isConfigured]);
 
-  // 斷開連線
-  const handleDisconnect = useCallback(() => {
-    setAssets([]);
-    setIsConnected(false);
-    setError(null);
-  }, []);
-
-  // 連接
-  const handleConnect = useCallback(() => {
-    fetchBalance();
-  }, [fetchBalance]);
 
   useEffect(() => {
     fetchBalance();
@@ -159,7 +148,7 @@ export default function Home() {
         <Card>
           <CardContent className="py-5">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-neutral-500">Total Value</p>
+              <p className="text-sm font-medium text-neutral-500">總資產價值</p>
               {!loading && totalChange24hr !== 0 && (
                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${
                   totalChange24hr > 0 
@@ -189,7 +178,7 @@ export default function Home() {
 
         <Card>
           <CardContent className="py-5">
-            <p className="text-sm font-medium text-neutral-500 mb-1">Exchange Rate</p>
+            <p className="text-sm font-medium text-neutral-500 mb-1">匯率</p>
             {!exchangeRates ? (
               <p className="text-lg font-semibold text-neutral-900">Loading...</p>
             ) : exchangeRates.USDT > 0 ? (
@@ -207,7 +196,7 @@ export default function Home() {
       {/* 資產列表 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <h3 className="text-base font-semibold text-neutral-900">Assets List</h3>
+          <h3 className="text-base font-semibold text-neutral-900">資產列表</h3>
           <button
             onClick={fetchBalance}
             disabled={loading}
@@ -233,7 +222,7 @@ export default function Home() {
             </div>
           ) : !isConfigured ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500 mb-2">API credentials not configured.</p>
+              <p className="text-sm text-neutral-500 mb-2">API 未配置</p>
               <Link 
                 href="/settings" 
                 className="text-sm text-primary-600 hover:underline"
@@ -243,20 +232,20 @@ export default function Home() {
             </div>
           ) : !isConnected ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">Not connected. Click Connect in the header to view assets.</p>
+              <p className="text-sm text-neutral-500">未連線，點擊頁首的連線按鈕即可</p>
             </div>
           ) : assets.length === 0 ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">No assets found</p>
+              <p className="text-sm text-neutral-500">未找到資產</p>
             </div>
           ) : (
             <div>
               {/* 表頭 */}
               <div className="px-6 py-3 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
-                <span className="text-xs font-medium text-neutral-500 uppercase">Assets</span>
+                <span className="text-xs font-medium text-neutral-500 uppercase">資產</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right">Total</span>
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right min-w-[120px]">Value</span>
+                  <span className="text-xs font-medium text-neutral-500 uppercase text-right">總數量</span>
+                  <span className="text-xs font-medium text-neutral-500 uppercase text-right min-w-[120px]">總金額</span>
                 </div>
               </div>
               {/* 資產列表 */}
