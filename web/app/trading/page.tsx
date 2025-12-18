@@ -7,6 +7,7 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import Select from '@/components/Select';
 import { useCredentials } from '@/hooks/useCredentials';
+import { useBitoProWebSocket } from '@/hooks/useBitoProWebSocket';
 import { fetchWithCredentials } from '@/lib/api';
 import Link from 'next/link';
 
@@ -55,12 +56,16 @@ export default function TradingPage() {
   const [loading, setLoading] = useState(false);
   const [balances, setBalances] = useState<BalanceDisplay[]>([]);
   const [balanceLoading, setBalanceLoading] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [priceLoading, setPriceLoading] = useState(false);
   const [orderResult, setOrderResult] = useState<{ success: boolean; message: string } | null>(null);
   const [openOrders, setOpenOrders] = useState<OpenOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+
+  // 使用 WebSocket 獲取即時價格
+  const { data: wsData, isConnected: wsConnected } = useBitoProWebSocket(pair);
+  const bestBid = wsData?.bestBid ?? null;
+  const bestAsk = wsData?.bestAsk ?? null;
+  const currentPrice = wsData?.lastPrice ?? null;
 
   // 獲取餘額
   const fetchBalance = useCallback(async () => {
@@ -159,40 +164,9 @@ export default function TradingPage() {
     } catch (err) {
       setOrderResult({ success: false, message: '取消訂單失敗' });
     } finally {
-      setCancellingOrderId(null);
+    setCancellingOrderId(null);
     }
   };
-
-  // 獲取交易對價格
-  const fetchPrice = useCallback(async (tradingPair: string) => {
-    if (!tradingPair) {
-      setCurrentPrice(null);
-      return;
-    }
-
-    try {
-      setPriceLoading(true);
-      const pairLower = tradingPair.toLowerCase();
-      const response = await fetch(`/api/bitopro/ticker/${pairLower}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch price');
-      }
-
-      const data = await response.json();
-      setCurrentPrice(parseFloat(data.data?.lastPrice) || 0);
-    } catch (err) {
-      console.error('Failed to fetch price:', err);
-      setCurrentPrice(null);
-    } finally {
-      setPriceLoading(false);
-    }
-  }, []);
-
-  // 當交易對變更時獲取價格
-  useEffect(() => {
-    fetchPrice(pair);
-  }, [pair, fetchPrice]);
 
   const handleSubmit = async (e: React.FormEvent, orderSide: 'buy' | 'sell') => {
     e.preventDefault();
@@ -283,15 +257,32 @@ export default function TradingPage() {
                 {/* 當前價格 */}
                 {pair && (
                   <div className="p-4 bg-neutral-50 rounded-md">
-                    <p className="text-xs font-medium text-neutral-500 mb-1">目前價格</p>
-                    {priceLoading ? (
-                      <p className="text-xl font-semibold text-neutral-400">載入中...</p>
-                    ) : currentPrice !== null ? (
-                      <p className="text-xl font-semibold text-neutral-900 tabular-nums">
-                        NT$ {currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-neutral-500">目前價格</p>
+                        <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-success-500 animate-pulse' : 'bg-neutral-300'}`} />
+                      </div>
+                      <p className="text-xs text-neutral-400">{wsConnected ? '即時更新' : '連線中...'}</p>
+                    </div>
+                    {!wsConnected && bestBid === null ? (
+                      <p className="text-xl font-semibold text-neutral-400">連線中...</p>
+                    ) : bestBid !== null && bestAsk !== null ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-success-600 mb-1">買入價 (Bid)</p>
+                          <p className="text-lg font-semibold text-success-600 tabular-nums">
+                            NT$ {bestBid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-danger-600 mb-1">賣出價 (Ask)</p>
+                          <p className="text-lg font-semibold text-danger-600 tabular-nums">
+                            NT$ {bestAsk.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-xl font-semibold text-danger-600">載入失敗</p>
+                      <p className="text-xl font-semibold text-danger-600">連線失敗</p>
                     )}
                   </div>
                 )}
@@ -326,7 +317,7 @@ export default function TradingPage() {
                   <Input
                     label="限價價格 (TWD)"
                     type="number"
-                    placeholder={currentPrice ? `目前 ${currentPrice.toLocaleString()}` : '輸入價格'}
+                    placeholder="輸入價格"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     helperText={price && currentPrice ? 

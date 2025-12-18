@@ -154,7 +154,9 @@ class BitoProAPI {
 
   // 獲取最新成交價
   static async getTicker(pair: string) {
-    const response = await fetch(`${BASE_URL}/tickers/${pair}`);
+    const response = await fetch(`${BASE_URL}/tickers/${pair}`, {
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch ticker: ${response.status}`);
