@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import BitoProAPI from '@/lib/bitopro';
 
-export async function POST(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const apiKey = request.headers.get('X-API-Key');
     const apiSecret = request.headers.get('X-API-Secret');
@@ -10,34 +10,31 @@ export async function POST(request: Request) {
     if (!apiKey || !apiSecret || !email) {
       return NextResponse.json(
         { error: 'API credentials not configured' },
-        { status: 500 }
+        { status: 401 }
       );
     }
 
     const body = await request.json();
-    const { pair, action, amount, price, type } = body;
-    console.log(body);
-    if (!pair || !action || !amount || !type) {
+    const { pair, orderId } = body;
+
+    if (!pair || !orderId) {
       return NextResponse.json(
-        { error: 'Missing required parameters' },
+        { error: 'Missing required parameters: pair and orderId' },
         { status: 400 }
       );
     }
 
     const api = new BitoProAPI({ apiKey, apiSecret, email });
-    const order = await api.createOrder({
-      pair,
-      action,
-      amount,
-      price,
-      type,
-    });
+    const result = await api.cancelOrder(pair, orderId);
 
-    return NextResponse.json(order);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Failed to create order:', error);
+    console.error('Failed to cancel order:', error);
     return NextResponse.json(
-      { error: 'Failed to create order' },
+      { 
+        error: 'Failed to cancel order',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

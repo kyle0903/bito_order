@@ -105,40 +105,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* 交易偏好設定 */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-base font-semibold text-neutral-900">交易偏好設定</h3>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
-                />
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">啟用訂單確認</p>
-                  <p className="text-xs text-neutral-500">下單前先確認</p>
-                </div>
-              </label>
-            </div>
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
-                  defaultChecked
-                />
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">啟用通知</p>
-                  <p className="text-xs text-neutral-500">顯示訂單狀態的通知訊息</p>
-                </div>
-              </label>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* 關於 */}
         <Card>
           <CardHeader>

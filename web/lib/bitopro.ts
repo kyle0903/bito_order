@@ -86,9 +86,14 @@ class BitoProAPI {
     type: 'limit' | 'market';
   }) {
     const body = {
-      ...params,
+      action: params.action.toUpperCase(),
+      amount: parseFloat(params.amount).toFixed(8),
+      price: params.price || '0',
+      type: params.type.toUpperCase(),
       timestamp: Date.now(),
     };
+
+    console.log('Creating order with body:', body);
 
     const response = await fetch(`${BASE_URL}/orders/${params.pair}`, {
       method: 'POST',
@@ -96,11 +101,14 @@ class BitoProAPI {
       body: JSON.stringify(body),
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      throw new Error(`Failed to create order: ${response.status}`);
+      console.error('BitoPro API error:', data);
+      throw new Error(data.message || data.error || `Failed to create order: ${response.status}`);
     }
 
-    return response.json();
+    return data;
   }
 
   // 取消訂單

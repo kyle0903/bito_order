@@ -21,6 +21,17 @@ interface BalanceDisplay {
   balance: number;
 }
 
+interface OpenOrder {
+  id: string;
+  pair: string;
+  action: string;
+  price: string;
+  originalAmount: string;
+  executedAmount: string;
+  status: number;
+  createdTimestamp: number;
+}
+
 const pairs = [
   { value: '', label: '選擇交易對' },
   { value: 'BTC_TWD', label: 'BTC/TWD' },
@@ -40,11 +51,16 @@ export default function TradingPage() {
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
+  const [inputAmount, setInputAmount] = useState(''); // 輸入的金額 (TWD)
   const [loading, setLoading] = useState(false);
   const [balances, setBalances] = useState<BalanceDisplay[]>([]);
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [orderResult, setOrderResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [openOrders, setOpenOrders] = useState<OpenOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   // 獲取餘額
   const fetchBalance = useCallback(async () => {
@@ -83,6 +99,70 @@ export default function TradingPage() {
     fetchBalance();
   }, [fetchBalance]);
 
+  // 獲取掛單
+  const fetchOpenOrders = useCallback(async () => {
+    if (!isConfigured) {
+      setOrdersLoading(false);
+      return;
+    }
+
+    try {
+      setOrdersLoading(true);
+      // 取得所有交易對的掛單
+      const allOrders: OpenOrder[] = [];
+      
+      for (const p of pairs.filter(p => p.value)) {
+        const response = await fetchWithCredentials(
+          `/api/bitopro/orders?pairs=${p.value.toLowerCase()}`, 
+          credentials
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // 只取狀態為 1 (掛單中) 或 3 (部分成交) 的訂單
+          const openOrdersForPair = (data.data || []).filter(
+            (o: OpenOrder) => o.status === 1 || o.status === 3
+          );
+          allOrders.push(...openOrdersForPair);
+        }
+      }
+      
+      setOpenOrders(allOrders);
+    } catch (err) {
+      console.error('Failed to fetch open orders:', err);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [credentials, isConfigured]);
+
+  useEffect(() => {
+    fetchOpenOrders();
+  }, [fetchOpenOrders]);
+
+  // 取消訂單
+  const cancelOrder = async (orderId: string, orderPair: string) => {
+    setCancellingOrderId(orderId);
+    try {
+      const response = await fetchWithCredentials('/api/bitopro/order/cancel', credentials, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pair: orderPair.toLowerCase(), orderId }),
+      });
+
+      if (response.ok) {
+        setOrderResult({ success: true, message: '訂單已取消' });
+        fetchOpenOrders();
+        fetchBalance();
+      } else {
+        const data = await response.json();
+        setOrderResult({ success: false, message: data.error || '取消失敗' });
+      }
+    } catch (err) {
+      setOrderResult({ success: false, message: '取消訂單失敗' });
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
   // 獲取交易對價格
   const fetchPrice = useCallback(async (tradingPair: string) => {
     if (!tradingPair) {
@@ -114,14 +194,70 @@ export default function TradingPage() {
     fetchPrice(pair);
   }, [pair, fetchPrice]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, orderSide: 'buy' | 'sell') => {
     e.preventDefault();
+    
+    if (!isConfigured) {
+      setOrderResult({ success: false, message: '請先設定 API 憑證' });
+      return;
+    }
+
+    if (!pair || !amount) {
+      setOrderResult({ success: false, message: '請選擇交易對並輸入數量' });
+      return;
+    }
+
+    if (orderType === 'limit' && !price) {
+      setOrderResult({ success: false, message: '限價單請輸入價格' });
+      return;
+    }
+
+    setSide(orderSide);
     setLoading(true);
-    // TODO: Implement BitoPro API call
-    setTimeout(() => {
+    setOrderResult(null);
+
+    try {
+      const orderData = {
+        pair: pair.toLowerCase(),
+        action: orderSide,
+        amount: amount,
+        ...(orderType === 'limit' && { price: price }),
+        type: orderType
+      };
+
+      const response = await fetchWithCredentials('/api/bitopro/order', credentials, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.orderId) {
+        setOrderResult({ 
+          success: true, 
+          message: `訂單已建立！訂單編號: ${data.orderId}` 
+        });
+        // 清空表單
+        setAmount('');
+        setPrice('');
+        // 重新獲取餘額
+        fetchBalance();
+      } else {
+        setOrderResult({ 
+          success: false, 
+          message: data.error || data.message || '訂單建立失敗' 
+        });
+      }
+    } catch (err) {
+      console.error('Failed to create order:', err);
+      setOrderResult({ 
+        success: false, 
+        message: err instanceof Error ? err.message : '訂單建立失敗' 
+      });
+    } finally {
       setLoading(false);
-      alert('訂單已送出（模擬）');
-    }, 1500);
+    }
   };
 
   return (
@@ -134,7 +270,7 @@ export default function TradingPage() {
               <h3 className="text-base font-semibold text-neutral-900">下單</h3>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4">
                 {/* 交易對選擇 */}
                 <Select
                   label="交易對"
@@ -185,55 +321,87 @@ export default function TradingPage() {
                   </div>
                 </div>
 
-                {/* 限價單價格 */}
+                {/* 限價單價格輸入 */}
                 {orderType === 'limit' && (
                   <Input
-                    label="價格"
+                    label="限價價格 (TWD)"
                     type="number"
-                    placeholder="0.00"
+                    placeholder={currentPrice ? `目前 ${currentPrice.toLocaleString()}` : '輸入價格'}
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    step="0.01"
-                    required
+                    helperText={price && currentPrice ? 
+                      (parseFloat(price) < currentPrice ? '低於市價，可能需等待成交' : '高於市價，可能立即成交') 
+                      : undefined
+                    }
                   />
                 )}
 
-                {/* 數量 */}
+                {/* 金額輸入 (限價單用金額自動算數量) */}
                 <Input
-                  label="數量"
+                  label={orderType === 'limit' ? '金額 (TWD)' : `數量${pair ? ` (${pair.split('_')[0]})` : ''}`}
                   type="number"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  step="0.00000001"
-                  required
-                  helperText="輸入您想交易的數量"
+                  placeholder={orderType === 'limit' ? '輸入金額' : '輸入數量'}
+                  value={orderType === 'limit' ? inputAmount : amount}
+                  onChange={(e) => {
+                    if (orderType === 'limit') {
+                      setInputAmount(e.target.value);
+                      // 用限價價格或當前價格計算數量
+                      const priceToUse = parseFloat(price) || currentPrice || 0;
+                      if (priceToUse > 0 && e.target.value) {
+                        const calcAmount = parseFloat(e.target.value) / priceToUse;
+                        if (!isNaN(calcAmount) && isFinite(calcAmount)) {
+                          setAmount(calcAmount.toFixed(8));
+                        }
+                      }
+                    } else {
+                      setAmount(e.target.value);
+                    }
+                  }}
+                  helperText={orderType === 'limit' && inputAmount && (parseFloat(price) || currentPrice) ? 
+                    `≈ ${(parseFloat(inputAmount) / (parseFloat(price) || currentPrice || 1)).toFixed(8)} ${pair ? pair.split('_')[0] : ''}` 
+                    : undefined
+                  }
                 />
 
                 {/* 買入/賣出按鈕 */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Button
-                    type="submit"
+                    type="button"
                     variant="success"
                     size="lg"
                     loading={loading && side === 'buy'}
-                    onClick={() => setSide('buy')}
-                    disabled={!pair || !amount}
+                    onClick={(e) => handleSubmit(e, 'buy')}
+                    disabled={!pair || !amount || loading}
                   >
                     買入
                   </Button>
                   <Button
-                    type="submit"
+                    type="button"
                     variant="danger"
                     size="lg"
                     loading={loading && side === 'sell'}
-                    onClick={() => setSide('sell')}
-                    disabled={!pair || !amount}
+                    onClick={(e) => handleSubmit(e, 'sell')}
+                    disabled={!pair || !amount || loading}
                   >
                     賣出
                   </Button>
                 </div>
-              </form>
+
+                {/* 結果提示 */}
+                {orderResult && (
+                  <div className={`p-4 rounded-lg ${orderResult.success ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'}`}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{orderResult.message}</p>
+                      <button
+                        onClick={() => setOrderResult(null)}
+                        className="text-current opacity-70 hover:opacity-100"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -280,6 +448,65 @@ export default function TradingPage() {
             </CardContent>
           </Card>
 
+          {/* 掛單委託 */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <h3 className="text-sm font-semibold text-neutral-900">掛單委託</h3>
+              <button
+                onClick={fetchOpenOrders}
+                disabled={ordersLoading}
+                className="text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
+              >
+                {ordersLoading ? '載入中...' : '重新整理'}
+              </button>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {!isConfigured ? (
+                <p className="text-sm text-neutral-500">尚未設定 API 憑證</p>
+              ) : ordersLoading ? (
+                <p className="text-sm text-neutral-500">載入掛單中...</p>
+              ) : openOrders.length === 0 ? (
+                <p className="text-sm text-neutral-500">無掛單委託</p>
+              ) : (
+                openOrders.map((order) => (
+                  <div 
+                    key={order.id} 
+                    className="p-3 bg-neutral-50 rounded-lg space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          {order.pair.replace('_', '/').toUpperCase()}
+                        </span>
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                          order.action.toLowerCase() === 'buy' 
+                            ? 'bg-success-100 text-success-700' 
+                            : 'bg-danger-100 text-danger-700'
+                        }`}>
+                          {order.action.toLowerCase() === 'buy' ? '買' : '賣'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => cancelOrder(order.id, order.pair)}
+                        disabled={cancellingOrderId === order.id}
+                        className="text-xs text-danger-600 hover:text-danger-700 disabled:opacity-50"
+                      >
+                        {cancellingOrderId === order.id ? '取消中...' : '取消'}
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-xs text-neutral-600">
+                      <span>價格: NT$ {parseFloat(order.price).toLocaleString()}</span>
+                      <span>數量: {parseFloat(order.originalAmount).toFixed(6)}</span>
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      {new Date(order.createdTimestamp).toLocaleString('zh-TW')}
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
           {/* 訂單摘要 */}
           {pair && amount && (
             <Card>
@@ -302,7 +529,7 @@ export default function TradingPage() {
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-neutral-600">預估總額</span>
                   <span className="font-semibold text-neutral-900 tabular-nums">
-                    NT$ {(parseFloat(amount || '0') * (currentPrice || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    NT$ {(parseFloat(amount || '0') * (orderType === 'limit' && price ? parseFloat(price) : (currentPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </CardContent>

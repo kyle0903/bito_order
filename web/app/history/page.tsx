@@ -49,6 +49,12 @@ export default function HistoryPage() {
   // 過濾器狀態
   const [selectedPairs, setSelectedPairs] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  
+  // 多選相關狀態
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addResult, setAddResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     if (!isConfigured) {
@@ -105,6 +111,82 @@ export default function HistoryPage() {
       minute: '2-digit',
       second: '2-digit',
     });
+  };
+
+  // 處理訂單選取
+  const handleOrderSelect = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  // 全選/取消全選
+  const handleSelectAll = () => {
+    const filteredOrders = orders.filter((order) => {
+      if (selectedStatus === 'all') return true;
+      const orderStatus = statusMap[order.status] || 'unknown';
+      return orderStatus === selectedStatus;
+    });
+    
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
+    }
+  };
+
+  // 新增紀錄到 Notion
+  const handleAddToNotion = async () => {
+    if (selectedOrders.size === 0) return;
+    
+    setIsAdding(true);
+    setAddResult(null);
+    
+    try {
+      // 將選取的訂單轉換為 Notion 格式
+      const ordersToAdd = orders
+        .filter(o => selectedOrders.has(o.id))
+        .map(order => {
+          const pair = order.pair.split('_')[0].toUpperCase(); // 取得幣種 (如 BTC)
+          const date = new Date(order.createdTimestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+          const quantity = parseFloat(order.executedAmount) || parseFloat(order.originalAmount);
+          const total = parseFloat(order.total) || (parseFloat(order.price) * quantity);
+          const isSell = order.action.toLowerCase() === 'sell';
+          
+          return {
+            target: pair,
+            date: date,
+            quantity: isSell ? -quantity : quantity, // 賣出為負數
+            amount: isSell ? -total : total,          // 賣出為負數
+          };
+        });
+
+      const response = await fetch('/api/notion/assets/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orders: ordersToAdd }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setAddResult({ success: true, message: data.message });
+        setSelectedOrders(new Set()); // 清空選取
+        setShowConfirmDialog(false);
+      } else {
+        setAddResult({ success: false, message: data.error || '新增失敗' });
+      }
+    } catch (err) {
+      setAddResult({ success: false, message: '新增失敗，請稍後再試' });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -165,9 +247,35 @@ export default function HistoryPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-neutral-900">
-              訂單 ({orders.length})
-            </h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-base font-semibold text-neutral-900">
+                訂單 ({orders.length})
+              </h3>
+              {selectedOrders.size > 0 && (
+                <span className="text-sm text-neutral-500">
+                  已選取 {selectedOrders.size} 筆
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedOrders.size > 0 && (
+                <Button
+                  onClick={() => setShowConfirmDialog(true)}
+                  variant="primary"
+                  size="sm"
+                >
+                  新增紀錄
+                </Button>
+              )}
+              <Button
+                onClick={() => setSelectedOrders(new Set())}
+                variant="secondary"
+                size="sm"
+                disabled={selectedOrders.size === 0}
+              >
+                取消選取
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -198,6 +306,18 @@ export default function HistoryPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-neutral-200">
+                    <th className="px-3 py-3 text-center w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrders.size > 0 && selectedOrders.size === orders.filter((order) => {
+                          if (selectedStatus === 'all') return true;
+                          const orderStatus = statusMap[order.status] || 'unknown';
+                          return orderStatus === selectedStatus;
+                        }).length}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 text-primary-600 rounded border-neutral-300 focus:ring-primary-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                       時間
                     </th>
@@ -239,7 +359,18 @@ export default function HistoryPage() {
                     const status = statusMap[order.status] || '未知';
 
                     return (
-                      <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
+                      <tr 
+                        key={order.id} 
+                        className={`hover:bg-neutral-50 transition-colors ${selectedOrders.has(order.id) ? 'bg-primary-50' : ''}`}
+                      >
+                        <td className="px-3 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrders.has(order.id)}
+                            onChange={() => handleOrderSelect(order.id)}
+                            className="w-4 h-4 text-primary-600 rounded border-neutral-300 focus:ring-primary-500"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600 tabular-nums">
                           {formatTimestamp(order.createdTimestamp)}
                         </td>
@@ -294,6 +425,73 @@ export default function HistoryPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 確認對話框 */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">確認新增紀錄</h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-sm text-neutral-600 mb-4">
+                確定要將選取的 {selectedOrders.size} 筆訂單加入到資產紀錄嗎？
+              </p>
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {orders
+                  .filter(o => selectedOrders.has(o.id))
+                  .map(order => {
+                    const isSell = order.action.toLowerCase() === 'sell';
+                    const total = parseFloat(order.total) || 0;
+                    return (
+                      <div key={order.id} className="flex items-center justify-between text-sm py-1 border-b border-neutral-100">
+                        <span className="font-medium">{order.pair.split('_')[0].toUpperCase()}</span>
+                        <span className={isSell ? 'text-danger-600' : 'text-success-600'}>
+                          {isSell ? '賣出' : '買入'} NT$ {total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-neutral-50 flex justify-end gap-2">
+              <Button
+                onClick={() => setShowConfirmDialog(false)}
+                variant="secondary"
+                size="sm"
+                disabled={isAdding}
+              >
+                取消
+              </Button>
+              <Button
+                onClick={handleAddToNotion}
+                variant="primary"
+                size="sm"
+                disabled={isAdding}
+              >
+                {isAdding ? '新增中...' : '確認新增'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 結果提示 */}
+      {addResult && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className={`px-6 py-3 rounded-lg shadow-lg ${
+            addResult.success ? 'bg-success-600' : 'bg-danger-600'
+          } text-white flex items-center gap-3`}>
+            <span className="text-sm font-medium">{addResult.message}</span>
+            <button
+              onClick={() => setAddResult(null)}
+              className="text-white hover:opacity-80"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
