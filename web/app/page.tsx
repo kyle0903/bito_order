@@ -244,10 +244,10 @@ export default function Home() {
           <CardContent className="py-5">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-neutral-500">總資產價值</p>
+                <p className="text-sm font-medium text-neutral-400">總資產價值</p>
                 <button
                   onClick={toggleShowAmounts}
-                  className="text-neutral-400 hover:text-neutral-600 transition-colors p-1 rounded-full hover:bg-neutral-100"
+                  className="text-neutral-500 hover:text-neutral-300 transition-colors p-1 rounded-full hover:bg-neutral-800"
                   title={showAmounts ? '隱藏金額' : '顯示金額'}
                 >
                   {showAmounts ? (
@@ -264,21 +264,21 @@ export default function Home() {
               </div>
               {!loading && totalChange24hr !== 0 && (
                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${totalChange24hr > 0
-                  ? 'bg-success-50 text-success-600'
-                  : 'bg-danger-50 text-danger-600'
+                  ? 'bg-success-900/30 text-success-400'
+                  : 'bg-danger-900/30 text-danger-400'
                   }`}>
                   {totalChange24hr > 0 ? '+' : ''}{totalChange24hr.toFixed(2)}% (24h)
                 </span>
               )}
             </div>
-            <p className="text-2xl font-semibold text-neutral-900 tabular-nums">
+            <p className="text-2xl font-semibold text-white tabular-nums">
               {loading ? '...' : `NT$ ${formatAmount(totalValueTWD, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}`}
             </p>
             {!loading && exchangeRates?.USD && exchangeRates.USD > 0 && (
-              <p className="text-sm text-neutral-500 tabular-nums mt-1">
+              <p className="text-sm text-neutral-400 tabular-nums mt-1">
                 ≈ ${formatAmount(totalValueUSD, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -292,27 +292,27 @@ export default function Home() {
         <Card>
           <CardContent className="py-5">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-neutral-500">總損益</p>
+              <p className="text-sm font-medium text-neutral-400">總損益</p>
               {!loading && (
                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${totalProfitLossRate >= 0
-                  ? 'bg-success-50 text-success-600'
-                  : 'bg-danger-50 text-danger-600'
+                  ? 'bg-success-900/30 text-success-400'
+                  : 'bg-danger-900/30 text-danger-400'
                   }`}>
                   {totalProfitLossRate >= 0 ? '+' : ''}{totalProfitLossRate.toFixed(2)}%
                 </span>
               )}
             </div>
             {loading ? (
-              <p className="text-2xl font-semibold text-neutral-900">...</p>
+              <p className="text-2xl font-semibold text-neutral-100">...</p>
             ) : (
               <>
-                <p className={`text-2xl font-semibold tabular-nums ${totalProfitLoss >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                <p className={`text-2xl font-semibold tabular-nums ${totalProfitLoss >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                   {totalProfitLoss >= 0 ? '+' : ''}NT$ {formatAmount(totalProfitLoss, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
                 </p>
-                <p className="text-xs text-neutral-500 mt-1">
+                <p className="text-xs text-neutral-400 mt-1">
                   總成本: NT$ {formatAmount(totalCost, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
               </>
@@ -322,50 +322,50 @@ export default function Home() {
 
         <Card>
           <CardContent className="py-5">
-            <p className="text-sm font-medium text-neutral-500 mb-1">匯率</p>
+            <p className="text-sm font-medium text-neutral-400 mb-1">匯率</p>
             {!exchangeRates ? (
-              <p className="text-lg font-semibold text-neutral-900">Loading...</p>
+              <p className="text-lg font-semibold text-neutral-100">Loading...</p>
             ) : exchangeRates.USD > 0 ? (
-              <div className="text-sm font-semibold text-neutral-900 space-y-1">
+              <div className="text-sm font-semibold text-neutral-100 space-y-1">
                 <p className="tabular-nums">1 USD = NT$ {exchangeRates.USD}</p>
-                <p className="tabular-nums text-xs text-neutral-500">USD/TWD</p>
+                <p className="tabular-nums text-xs text-neutral-400">USD/TWD</p>
               </div>
             ) : (
-              <p className="text-lg font-semibold text-danger-600">Failed</p>
+              <p className="text-lg font-semibold text-danger-400">Failed</p>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="py-5">
-            <p className="text-sm font-medium text-neutral-500 mb-1">恐懼貪婪指數</p>
+            <p className="text-sm font-medium text-neutral-400 mb-1">恐懼貪婪指數</p>
             {!fearGreed ? (
-              <p className="text-lg font-semibold text-neutral-900">Loading...</p>
+              <p className="text-lg font-semibold text-neutral-100">Loading...</p>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span 
+                  <span
                     className="text-2xl font-bold tabular-nums"
                     style={{ color: fearGreed.color }}
                   >
                     {fearGreed.value}
                   </span>
-                  <span 
+                  <span
                     className="text-sm font-semibold px-2 py-0.5 rounded"
-                    style={{ 
+                    style={{
                       backgroundColor: `${fearGreed.color}20`,
-                      color: fearGreed.color 
+                      color: fearGreed.color
                     }}
                   >
                     {fearGreed.classification}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
-                  <div 
+                <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
+                  <div
                     className="h-full rounded-full transition-all"
-                    style={{ 
+                    style={{
                       width: `${fearGreed.value}%`,
-                      backgroundColor: fearGreed.color 
+                      backgroundColor: fearGreed.color
                     }}
                   />
                 </div>
@@ -378,25 +378,23 @@ export default function Home() {
       {/* 資產配置圓餅圖 */}
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
-          <h3 className="text-base font-semibold text-neutral-900">資產配置</h3>
-          <div className="flex items-center gap-1 bg-neutral-100 rounded-lg p-1">
+          <h3 className="text-base font-semibold text-neutral-100">資產配置</h3>
+          <div className="flex items-center gap-1 bg-neutral-800 rounded-lg p-1">
             <button
               onClick={() => setChartMode('value')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                chartMode === 'value'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'value'
+                  ? 'bg-neutral-700 text-neutral-100 shadow-sm'
+                  : 'text-neutral-400 hover:text-neutral-200'
+                }`}
             >
               現值比例
             </button>
             <button
               onClick={() => setChartMode('cost')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                chartMode === 'cost'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'cost'
+                  ? 'bg-neutral-700 text-neutral-100 shadow-sm'
+                  : 'text-neutral-400 hover:text-neutral-200'
+                }`}
             >
               成本比例
             </button>
@@ -405,7 +403,7 @@ export default function Home() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <p className="text-sm text-neutral-500">載入中...</p>
+              <p className="text-sm text-neutral-400">載入中...</p>
             </div>
           ) : (
             <AssetPieChart
@@ -420,11 +418,11 @@ export default function Home() {
       {/* 資產列表 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <h3 className="text-base font-semibold text-neutral-900">資產列表</h3>
+          <h3 className="text-base font-semibold text-neutral-100">資產列表</h3>
           <button
             onClick={fetchAssets}
             disabled={loading}
-            className="text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
+            className="text-sm text-primary-400 hover:text-primary-300 disabled:opacity-50"
           >
             {loading ? '載入中...' : '重新整理'}
           </button>
@@ -432,56 +430,56 @@ export default function Home() {
         <CardContent className="p-0">
           {error ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-danger-600">{error}</p>
+              <p className="text-sm text-danger-400">{error}</p>
               <button
                 onClick={fetchAssets}
-                className="mt-2 text-sm text-primary-600 hover:underline"
+                className="mt-2 text-sm text-primary-400 hover:underline"
               >
                 重試
               </button>
             </div>
           ) : loading ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">載入資產中...</p>
+              <p className="text-sm text-neutral-400">載入資產中...</p>
             </div>
           ) : assets.length === 0 ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">未找到資產</p>
-              <p className="mt-1 text-xs text-neutral-400">請確認 Notion 環境變數已正確設定</p>
+              <p className="text-sm text-neutral-400">未找到資產</p>
+              <p className="mt-1 text-xs text-neutral-500">請確認 Notion 環境變數已正確設定</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               {/* 表頭 - 僅桌面版顯示 */}
-              <div className="hidden md:flex px-6 py-3 border-b border-neutral-200 items-center justify-between bg-neutral-50">
-                <span className="text-xs font-medium text-neutral-500 uppercase">資產</span>
+              <div className="hidden md:flex px-6 py-3 border-b border-neutral-800 items-center justify-between bg-neutral-800/50">
+                <span className="text-xs font-medium text-neutral-400 uppercase">資產</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right w-24">數量</span>
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right w-28">成本</span>
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right min-w-[120px]">現值 (TWD)</span>
-                  <span className="text-xs font-medium text-neutral-500 uppercase text-right w-24">損益率</span>
+                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-24">數量</span>
+                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-28">成本</span>
+                  <span className="text-xs font-medium text-neutral-400 uppercase text-right min-w-[120px]">現值 (TWD)</span>
+                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-24">損益率</span>
                 </div>
               </div>
               {/* 資產列表 */}
-              <div className="divide-y divide-neutral-200">
+              <div className="divide-y divide-neutral-800">
                 {assets.map((asset) => (
                   <div
                     key={asset.symbol}
-                    className="px-4 md:px-6 py-4 hover:bg-neutral-50 transition-colors"
+                    className="px-4 md:px-6 py-4 hover:bg-neutral-800/50 transition-colors"
                   >
                     {/* 手機版佈局 */}
                     <div className="md:hidden">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-100' : 'bg-neutral-100'}`}>
-                            <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-600' : 'text-neutral-400'}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}>
+                            <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>
                               {asset.symbol.substring(0, 2)}
                             </span>
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-neutral-900">{asset.symbol}</p>
+                              <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
                               {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
-                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}`}>
+                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                   {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
                                 </span>
                               )}
@@ -490,7 +488,7 @@ export default function Home() {
                         </div>
                         {/* 損益率 */}
                         {asset.hasTWDPair && asset.totalAmount > 0 && (
-                          <span className={`text-sm font-semibold ${getProfitLossRate(asset) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                          <span className={`text-sm font-semibold ${getProfitLossRate(asset) >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                             {getProfitLossRate(asset) >= 0 ? '+' : ''}{getProfitLossRate(asset).toFixed(2)}%
                           </span>
                         )}
@@ -498,15 +496,15 @@ export default function Home() {
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div>
                           <p className="text-xs text-neutral-500">數量</p>
-                          <p className="font-medium tabular-nums">{formatAmount(asset.quantity, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</p>
+                          <p className="font-medium tabular-nums text-neutral-200">{formatAmount(asset.quantity, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</p>
                         </div>
                         <div>
                           <p className="text-xs text-neutral-500">成本</p>
-                          <p className="font-medium tabular-nums">NT$ {formatAmount(asset.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                          <p className="font-medium tabular-nums text-neutral-200">NT$ {formatAmount(asset.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                         </div>
                         <div>
                           <p className="text-xs text-neutral-500">現值</p>
-                          <p className="font-medium tabular-nums">
+                          <p className="font-medium tabular-nums text-neutral-200">
                             {asset.hasTWDPair ? `NT$ ${formatAmount(asset.valueTWD, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '--'}
                           </p>
                         </div>
@@ -516,24 +514,24 @@ export default function Home() {
                     {/* 桌面版佈局 */}
                     <div className="hidden md:flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-100' : 'bg-neutral-100'}`}>
-                          <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-600' : 'text-neutral-400'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}>
+                          <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>
                             {asset.symbol.substring(0, 2)}
                           </span>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-neutral-900">{asset.symbol}</p>
+                            <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
                             {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
-                              <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}`}>
+                              <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                 {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
                               </span>
                             )}
                             {!asset.hasTWDPair && (
-                              <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">無價格</span>
+                              <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-500">無價格</span>
                             )}
                           </div>
-                          <div className="text-xs text-neutral-500">
+                          <div className="text-xs text-neutral-400">
                             {asset.hasTWDPair ? (
                               <>
                                 <p>NT$ {asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -542,7 +540,7 @@ export default function Home() {
                                 )}
                               </>
                             ) : (
-                              <span className="text-neutral-400">無法取得 TWD 交易對</span>
+                              <span className="text-neutral-500">無法取得 TWD 交易對</span>
                             )}
                           </div>
                         </div>
@@ -550,35 +548,35 @@ export default function Home() {
 
                       <div className="flex items-center gap-6">
                         <div className="text-right w-24">
-                          <p className="text-sm font-medium text-neutral-900 tabular-nums">
+                          <p className="text-sm font-medium text-neutral-200 tabular-nums">
                             {formatAmount(asset.quantity, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
                           </p>
                         </div>
                         <div className="text-right w-28">
-                          <p className="text-sm font-medium text-neutral-700 tabular-nums">
+                          <p className="text-sm font-medium text-neutral-300 tabular-nums">
                             NT$ {formatAmount(asset.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                         </div>
                         <div className="text-right min-w-[120px]">
                           {asset.hasTWDPair ? (
                             <>
-                              <p className="text-sm font-semibold text-neutral-900 tabular-nums">
+                              <p className="text-sm font-semibold text-neutral-100 tabular-nums">
                                 NT$ {formatAmount(asset.valueTWD, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                               {exchangeRates?.USD && exchangeRates.USD > 0 && (
-                                <p className="text-xs text-neutral-500 tabular-nums">
+                                <p className="text-xs text-neutral-400 tabular-nums">
                                   ≈ ${formatAmount(asset.valueTWD / exchangeRates.USD, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                                 </p>
                               )}
                             </>
                           ) : (
-                            <p className="text-sm font-medium text-neutral-400 tabular-nums">--</p>
+                            <p className="text-sm font-medium text-neutral-500 tabular-nums">--</p>
                           )}
                         </div>
                         <div className="text-right w-24">
                           {asset.hasTWDPair && asset.totalAmount > 0 ? (
                             <>
-                              <p className={`text-sm font-semibold tabular-nums ${getProfitLossRate(asset) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                              <p className={`text-sm font-semibold tabular-nums ${getProfitLossRate(asset) >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                                 {getProfitLossRate(asset) >= 0 ? '+' : ''}{getProfitLossRate(asset).toFixed(2)}%
                               </p>
                               <p className={`text-xs tabular-nums ${(asset.valueTWD - asset.totalAmount) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
@@ -586,7 +584,7 @@ export default function Home() {
                               </p>
                             </>
                           ) : (
-                            <p className="text-sm font-medium text-neutral-400 tabular-nums">--</p>
+                            <p className="text-sm font-medium text-neutral-500 tabular-nums">--</p>
                           )}
                         </div>
                       </div>
@@ -597,7 +595,7 @@ export default function Home() {
 
               {/* 無價格資產提示 */}
               {assetsWithoutPrice.length > 0 && (
-                <div className="px-4 md:px-6 py-3 bg-neutral-50 border-t border-neutral-200">
+                <div className="px-4 md:px-6 py-3 bg-neutral-800/50 border-t border-neutral-800">
                   <p className="text-xs text-neutral-500">
                     * {assetsWithoutPrice.length} 項資產無法取得台幣價格（可能為美股或其他不支援的資產）
                   </p>

@@ -4,12 +4,12 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
   }
 
   body {
-    @apply bg-neutral-50 text-neutral-900;
+    @apply bg-neutral-950 text-neutral-100;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 }
@@ -36,20 +36,20 @@
   }
 }
 
-/* 捲軸樣式 */
+/* 捲軸樣式 - 暗色系 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-neutral-100;
+  @apply bg-neutral-900;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-neutral-300 rounded-lg;
+  @apply bg-neutral-700 rounded-lg;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-neutral-400;
+  @apply bg-neutral-600;
 }

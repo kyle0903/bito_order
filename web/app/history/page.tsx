@@ -198,7 +198,7 @@ export default function HistoryPage() {
           <div className="flex flex-wrap gap-6 items-start">
             {/* 幣種選擇 */}
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-2">幣種</label>
+              <label className="block text-xs font-medium text-neutral-400 mb-2">幣種</label>
               <div className="flex flex-wrap gap-2">
                 {availablePairs.map((pair) => (
                   <button
@@ -206,7 +206,7 @@ export default function HistoryPage() {
                     onClick={() => handlePairToggle(pair.value)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${selectedPairs.includes(pair.value)
                       ? 'bg-primary-600 text-white'
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                      : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                       }`}
                   >
                     {pair.label}
@@ -217,7 +217,7 @@ export default function HistoryPage() {
 
             {/* 狀態篩選 */}
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-2">狀態</label>
+              <label className="block text-xs font-medium text-neutral-400 mb-2">狀態</label>
               <div className="flex flex-wrap gap-2">
                 {[{ value: 'all', label: '全部' }, { value: '掛單中', label: '掛單中' }, { value: '已完成', label: '已完成' }, { value: '部分成交', label: '部分成交' }, { value: '已取消', label: '已取消' }].map((status) => (
                   <button
@@ -225,7 +225,7 @@ export default function HistoryPage() {
                     onClick={() => setSelectedStatus(status.value)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${selectedStatus === status.value
                       ? 'bg-primary-600 text-white'
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                      : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                       }`}
                   >
                     {status.label}
@@ -247,11 +247,11 @@ export default function HistoryPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h3 className="text-base font-semibold text-neutral-900">
+              <h3 className="text-base font-semibold text-neutral-100">
                 訂單 ({orders.length})
               </h3>
               {selectedOrders.size > 0 && (
-                <span className="text-sm text-neutral-500">
+                <span className="text-sm text-neutral-400">
                   已選取 {selectedOrders.size} 筆
                 </span>
               )}
@@ -280,31 +280,31 @@ export default function HistoryPage() {
         <CardContent className="p-0">
           {!isConfigured ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500 mb-2">尚未設定 API 憑證</p>
-              <Link href="/settings" className="text-sm text-primary-600 hover:underline">
+              <p className="text-sm text-neutral-400 mb-2">尚未設定 API 憑證</p>
+              <Link href="/settings" className="text-sm text-primary-400 hover:underline">
                 前往設定頁面設定
               </Link>
             </div>
           ) : error ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-danger-600">{error}</p>
-              <button onClick={fetchOrders} className="mt-2 text-sm text-primary-600 hover:underline">
+              <p className="text-sm text-danger-400">{error}</p>
+              <button onClick={fetchOrders} className="mt-2 text-sm text-primary-400 hover:underline">
                 重試
               </button>
             </div>
           ) : loading ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">載入中...</p>
+              <p className="text-sm text-neutral-400">載入中...</p>
             </div>
           ) : orders.length === 0 ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-sm text-neutral-500">無訂單紀錄</p>
+              <p className="text-sm text-neutral-400">無訂單紀錄</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-neutral-200">
+                  <tr className="border-b border-neutral-800">
                     <th className="px-3 py-3 text-center w-12">
                       <input
                         type="checkbox"
@@ -314,36 +314,36 @@ export default function HistoryPage() {
                           return orderStatus === selectedStatus;
                         }).length}
                         onChange={handleSelectAll}
-                        className="w-4 h-4 text-primary-600 rounded border-neutral-300 focus:ring-primary-500"
+                        className="w-4 h-4 text-primary-600 rounded border-neutral-600 bg-neutral-800 focus:ring-primary-500"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       時間
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       幣種
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       類型
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       方向
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       數量
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       價格
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       總額
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       狀態
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200">
+                <tbody className="divide-y divide-neutral-800">
                   {orders
                     .filter((order) => {
                       if (selectedStatus === 'all') return true;
@@ -360,40 +360,40 @@ export default function HistoryPage() {
                       return (
                         <tr
                           key={order.id}
-                          className={`hover:bg-neutral-50 transition-colors ${selectedOrders.has(order.id) ? 'bg-primary-50' : ''}`}
+                          className={`hover:bg-neutral-800/50 transition-colors ${selectedOrders.has(order.id) ? 'bg-primary-900/20' : ''}`}
                         >
                           <td className="px-3 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedOrders.has(order.id)}
                               onChange={() => handleOrderSelect(order.id)}
-                              className="w-4 h-4 text-primary-600 rounded border-neutral-300 focus:ring-primary-500"
+                              className="w-4 h-4 text-primary-600 rounded border-neutral-600 bg-neutral-800 focus:ring-primary-500"
                             />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600 tabular-nums">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400 tabular-nums">
                             {formatTimestamp(order.createdTimestamp)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-100">
                             {order.pair.replace('_', '/').toUpperCase()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600 capitalize">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400 capitalize">
                             {order.type}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <span
-                              className={`font-medium ${order.action.toLowerCase() === 'buy' ? 'text-success-600' : 'text-danger-600'
+                              className={`font-medium ${order.action.toLowerCase() === 'buy' ? 'text-success-400' : 'text-danger-400'
                                 }`}
                             >
                               {order.action.toLowerCase() === 'buy' ? '買入' : '賣出'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900 text-right tabular-nums">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-100 text-right tabular-nums">
                             {amount.toLocaleString('en-US', { maximumFractionDigits: 8 })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900 text-right tabular-nums">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-100 text-right tabular-nums">
                             NT$ {price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900 text-right tabular-nums">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-100 text-right tabular-nums">
                             NT$ {total.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -401,12 +401,12 @@ export default function HistoryPage() {
                               className={`
                               inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                               ${status.includes('已成交')
-                                  ? 'bg-success-100 text-success-700'
+                                  ? 'bg-success-900/30 text-success-400'
                                   : status.includes('已取消')
-                                    ? 'bg-danger-100 text-danger-700'
+                                    ? 'bg-danger-900/30 text-danger-400'
                                     : status.includes('部分成交')
-                                      ? 'bg-warning-100 text-warning-700'
-                                      : 'bg-primary-100 text-primary-700'
+                                      ? 'bg-warning-900/30 text-warning-400'
+                                      : 'bg-primary-900/30 text-primary-400'
                                 }
                             `}
                             >
@@ -425,13 +425,13 @@ export default function HistoryPage() {
 
       {/* 確認對話框 */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-neutral-200">
-              <h3 className="text-lg font-semibold text-neutral-900">確認新增紀錄</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-neutral-900 rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden border border-neutral-800">
+            <div className="px-6 py-4 border-b border-neutral-800">
+              <h3 className="text-lg font-semibold text-neutral-100">確認新增紀錄</h3>
             </div>
             <div className="px-6 py-4">
-              <p className="text-sm text-neutral-600 mb-4">
+              <p className="text-sm text-neutral-400 mb-4">
                 確定要將選取的 {selectedOrders.size} 筆訂單加入到資產紀錄嗎？
               </p>
               <div className="max-h-48 overflow-y-auto space-y-2">
@@ -441,9 +441,9 @@ export default function HistoryPage() {
                     const isSell = order.action.toLowerCase() === 'sell';
                     const total = parseFloat(order.total) || 0;
                     return (
-                      <div key={order.id} className="flex items-center justify-between text-sm py-1 border-b border-neutral-100">
-                        <span className="font-medium">{order.pair.split('_')[0].toUpperCase()}</span>
-                        <span className={isSell ? 'text-danger-600' : 'text-success-600'}>
+                      <div key={order.id} className="flex items-center justify-between text-sm py-1 border-b border-neutral-800">
+                        <span className="font-medium text-neutral-100">{order.pair.split('_')[0].toUpperCase()}</span>
+                        <span className={isSell ? 'text-danger-400' : 'text-success-400'}>
                           {isSell ? '賣出' : '買入'} NT$ {total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </span>
                       </div>
@@ -451,7 +451,7 @@ export default function HistoryPage() {
                   })}
               </div>
             </div>
-            <div className="px-6 py-4 bg-neutral-50 flex justify-end gap-2">
+            <div className="px-6 py-4 bg-neutral-800/50 flex justify-end gap-2">
               <Button
                 onClick={() => setShowConfirmDialog(false)}
                 variant="secondary"

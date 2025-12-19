@@ -241,7 +241,7 @@ export default function TradingPage() {
         <div className="col-span-2">
           <Card>
             <CardHeader>
-              <h3 className="text-base font-semibold text-neutral-900">下單</h3>
+              <h3 className="text-base font-semibold text-neutral-100">下單</h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -256,40 +256,40 @@ export default function TradingPage() {
 
                 {/* 當前價格 */}
                 {pair && (
-                  <div className="p-4 bg-neutral-50 rounded-md">
+                  <div className="p-4 bg-neutral-800 rounded-md">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <p className="text-xs font-medium text-neutral-500">目前價格</p>
-                        <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-success-500 animate-pulse' : 'bg-neutral-300'}`} />
+                        <p className="text-xs font-medium text-neutral-400">目前價格</p>
+                        <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-success-500 animate-pulse' : 'bg-neutral-600'}`} />
                       </div>
-                      <p className="text-xs text-neutral-400">{wsConnected ? '即時更新' : '連線中...'}</p>
+                      <p className="text-xs text-neutral-500">{wsConnected ? '即時更新' : '連線中...'}</p>
                     </div>
                     {!wsConnected && bestBid === null ? (
-                      <p className="text-xl font-semibold text-neutral-400">連線中...</p>
+                      <p className="text-xl font-semibold text-neutral-500">連線中...</p>
                     ) : bestBid !== null && bestAsk !== null ? (
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-success-600 mb-1">買入價 (Bid)</p>
-                          <p className="text-lg font-semibold text-success-600 tabular-nums">
+                          <p className="text-xs text-success-400 mb-1">買入價 (Bid)</p>
+                          <p className="text-lg font-semibold text-success-400 tabular-nums">
                             NT$ {bestBid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-danger-600 mb-1">賣出價 (Ask)</p>
-                          <p className="text-lg font-semibold text-danger-600 tabular-nums">
+                          <p className="text-xs text-danger-400 mb-1">賣出價 (Ask)</p>
+                          <p className="text-lg font-semibold text-danger-400 tabular-nums">
                             NT$ {bestAsk.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xl font-semibold text-danger-600">連線失敗</p>
+                      <p className="text-xl font-semibold text-danger-400">連線失敗</p>
                     )}
                   </div>
                 )}
 
                 {/* 訂單類型 */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-300 mb-2">
                     訂單類型
                   </label>
                   <div className="flex gap-2">
@@ -301,8 +301,8 @@ export default function TradingPage() {
                         className={`
                           flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors
                           ${orderType === type.value
-                            ? 'bg-neutral-900 text-white'
-                            : 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50'
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700'
                           }
                         `}
                       >
@@ -380,7 +380,7 @@ export default function TradingPage() {
 
                 {/* 結果提示 */}
                 {orderResult && (
-                  <div className={`p-4 rounded-lg ${orderResult.success ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'}`}>
+                  <div className={`p-4 rounded-lg ${orderResult.success ? 'bg-success-900/30 text-success-300' : 'bg-danger-900/30 text-danger-300'}`}>
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">{orderResult.message}</p>
                       <button
@@ -402,11 +402,11 @@ export default function TradingPage() {
           {/* 餘額卡片 */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <h3 className="text-sm font-semibold text-neutral-900">餘額</h3>
+              <h3 className="text-sm font-semibold text-neutral-100">餘額</h3>
               <button
                 onClick={fetchBalance}
                 disabled={balanceLoading}
-                className="text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                className="text-xs text-primary-400 hover:text-primary-300 disabled:opacity-50"
               >
                 {balanceLoading ? '載入中...' : '重新整理'}
               </button>
@@ -414,20 +414,20 @@ export default function TradingPage() {
             <CardContent className="space-y-3">
               {!isConfigured ? (
                 <div className="text-center py-2">
-                  <p className="text-sm text-neutral-500 mb-2">尚未設定 API 憑證</p>
-                  <Link href="/settings" className="text-xs text-primary-600 hover:underline">
+                  <p className="text-sm text-neutral-400 mb-2">尚未設定 API 憑證</p>
+                  <Link href="/settings" className="text-xs text-primary-400 hover:underline">
                     前往設定
                   </Link>
                 </div>
               ) : balanceLoading ? (
-                <p className="text-sm text-neutral-500">載入餘額中...</p>
+                <p className="text-sm text-neutral-400">載入餘額中...</p>
               ) : balances.length === 0 ? (
-                <p className="text-sm text-neutral-500">找不到餘額</p>
+                <p className="text-sm text-neutral-400">找不到餘額</p>
               ) : (
                 balances.map((item) => (
                   <div key={item.symbol} className="flex justify-between items-center">
-                    <span className="text-sm text-neutral-600">{item.symbol}</span>
-                    <span className="text-sm font-semibold text-neutral-900 tabular-nums">
+                    <span className="text-sm text-neutral-400">{item.symbol}</span>
+                    <span className="text-sm font-semibold text-neutral-100 tabular-nums">
                       {item.balance.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 8,
@@ -442,36 +442,36 @@ export default function TradingPage() {
           {/* 掛單委託 */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <h3 className="text-sm font-semibold text-neutral-900">掛單委託</h3>
+              <h3 className="text-sm font-semibold text-neutral-100">掛單委託</h3>
               <button
                 onClick={fetchOpenOrders}
                 disabled={ordersLoading}
-                className="text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                className="text-xs text-primary-400 hover:text-primary-300 disabled:opacity-50"
               >
                 {ordersLoading ? '載入中...' : '重新整理'}
               </button>
             </CardHeader>
             <CardContent className="space-y-2">
               {!isConfigured ? (
-                <p className="text-sm text-neutral-500">尚未設定 API 憑證</p>
+                <p className="text-sm text-neutral-400">尚未設定 API 憑證</p>
               ) : ordersLoading ? (
-                <p className="text-sm text-neutral-500">載入掛單中...</p>
+                <p className="text-sm text-neutral-400">載入掛單中...</p>
               ) : openOrders.length === 0 ? (
-                <p className="text-sm text-neutral-500">無掛單委託</p>
+                <p className="text-sm text-neutral-400">無掛單委託</p>
               ) : (
                 openOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3 bg-neutral-50 rounded-lg space-y-2"
+                    className="p-3 bg-neutral-800 rounded-lg space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">
+                        <span className="text-sm font-medium text-neutral-100">
                           {order.pair.replace('_', '/').toUpperCase()}
                         </span>
                         <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${order.action.toLowerCase() === 'buy'
-                          ? 'bg-success-100 text-success-700'
-                          : 'bg-danger-100 text-danger-700'
+                          ? 'bg-success-900/30 text-success-400'
+                          : 'bg-danger-900/30 text-danger-400'
                           }`}>
                           {order.action.toLowerCase() === 'buy' ? '買' : '賣'}
                         </span>
@@ -479,12 +479,12 @@ export default function TradingPage() {
                       <button
                         onClick={() => cancelOrder(order.id, order.pair)}
                         disabled={cancellingOrderId === order.id}
-                        className="text-xs text-danger-600 hover:text-danger-700 disabled:opacity-50"
+                        className="text-xs text-danger-400 hover:text-danger-300 disabled:opacity-50"
                       >
                         {cancellingOrderId === order.id ? '取消中...' : '取消'}
                       </button>
                     </div>
-                    <div className="flex justify-between text-xs text-neutral-600">
+                    <div className="flex justify-between text-xs text-neutral-400">
                       <span>價格: NT$ {parseFloat(order.price).toLocaleString()}</span>
                       <span>數量: {parseFloat(order.originalAmount).toFixed(6)}</span>
                     </div>
@@ -501,24 +501,24 @@ export default function TradingPage() {
           {pair && amount && (
             <Card>
               <CardHeader>
-                <h3 className="text-sm font-semibold text-neutral-900">訂單摘要</h3>
+                <h3 className="text-sm font-semibold text-neutral-100">訂單摘要</h3>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">類型</span>
-                  <span className="font-medium text-neutral-900">
+                  <span className="text-neutral-400">類型</span>
+                  <span className="font-medium text-neutral-100">
                     {orderType === 'market' ? '市價' : '限價'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">數量</span>
-                  <span className="font-medium text-neutral-900 tabular-nums">
+                  <span className="text-neutral-400">數量</span>
+                  <span className="font-medium text-neutral-100 tabular-nums">
                     {amount}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-600">預估總額</span>
-                  <span className="font-semibold text-neutral-900 tabular-nums">
+                  <span className="text-neutral-400">預估總額</span>
+                  <span className="font-semibold text-neutral-100 tabular-nums">
                     NT$ {(parseFloat(amount || '0') * (orderType === 'limit' && price ? parseFloat(price) : (currentPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>

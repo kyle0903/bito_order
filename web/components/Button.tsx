@@ -20,10 +20,10 @@ export default function Button({
   const baseStyles = 'font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-neutral-900 text-white hover:bg-neutral-800 focus:ring-neutral-500',
+    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
     success: 'bg-success-600 text-white hover:bg-success-700 focus:ring-success-500',
     danger: 'bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500',
-    secondary: 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50 focus:ring-neutral-500',
+    secondary: 'bg-neutral-800 text-neutral-200 border border-neutral-700 hover:bg-neutral-700 focus:ring-neutral-500',
   };
 
   const sizes = {
