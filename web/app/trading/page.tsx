@@ -115,22 +115,22 @@ export default function TradingPage() {
       setOrdersLoading(true);
       // 取得所有交易對的掛單
       const allOrders: OpenOrder[] = [];
-      
+
       for (const p of pairs.filter(p => p.value)) {
         const response = await fetchWithCredentials(
-          `/api/bitopro/orders?pairs=${p.value.toLowerCase()}`, 
+          `/api/bitopro/orders?pairs=${p.value.toLowerCase()}`,
           credentials
         );
         if (response.ok) {
           const data = await response.json();
-          // 只取狀態為 1 (掛單中) 或 3 (部分成交) 的訂單
+          // 只取狀態為 0 掛單中 或 1 掛單中(部分成交) 的訂單
           const openOrdersForPair = (data.data || []).filter(
-            (o: OpenOrder) => o.status === 1 || o.status === 3
+            (o: OpenOrder) => o.status === 0 || o.status === 1
           );
           allOrders.push(...openOrdersForPair);
         }
       }
-      
+
       setOpenOrders(allOrders);
     } catch (err) {
       console.error('Failed to fetch open orders:', err);
@@ -164,13 +164,13 @@ export default function TradingPage() {
     } catch (err) {
       setOrderResult({ success: false, message: '取消訂單失敗' });
     } finally {
-    setCancellingOrderId(null);
+      setCancellingOrderId(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent, orderSide: 'buy' | 'sell') => {
     e.preventDefault();
-    
+
     if (!isConfigured) {
       setOrderResult({ success: false, message: '請先設定 API 憑證' });
       return;
@@ -208,9 +208,9 @@ export default function TradingPage() {
       const data = await response.json();
 
       if (response.ok && data.orderId) {
-        setOrderResult({ 
-          success: true, 
-          message: `訂單已建立！訂單編號: ${data.orderId}` 
+        setOrderResult({
+          success: true,
+          message: `訂單已建立！訂單編號: ${data.orderId}`
         });
         // 清空表單
         setAmount('');
@@ -218,16 +218,16 @@ export default function TradingPage() {
         // 重新獲取餘額
         fetchBalance();
       } else {
-        setOrderResult({ 
-          success: false, 
-          message: data.error || data.message || '訂單建立失敗' 
+        setOrderResult({
+          success: false,
+          message: data.error || data.message || '訂單建立失敗'
         });
       }
     } catch (err) {
       console.error('Failed to create order:', err);
-      setOrderResult({ 
-        success: false, 
-        message: err instanceof Error ? err.message : '訂單建立失敗' 
+      setOrderResult({
+        success: false,
+        message: err instanceof Error ? err.message : '訂單建立失敗'
       });
     } finally {
       setLoading(false);
@@ -320,8 +320,8 @@ export default function TradingPage() {
                     placeholder="輸入價格"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    helperText={price && currentPrice ? 
-                      (parseFloat(price) < currentPrice ? '低於市價，可能需等待成交' : '高於市價，可能立即成交') 
+                    helperText={price && currentPrice ?
+                      (parseFloat(price) < currentPrice ? '低於市價，可能需等待成交' : '高於市價，可能立即成交')
                       : undefined
                     }
                   />
@@ -348,8 +348,8 @@ export default function TradingPage() {
                       setAmount(e.target.value);
                     }
                   }}
-                  helperText={orderType === 'limit' && inputAmount && (parseFloat(price) || currentPrice) ? 
-                    `≈ ${(parseFloat(inputAmount) / (parseFloat(price) || currentPrice || 1)).toFixed(8)} ${pair ? pair.split('_')[0] : ''}` 
+                  helperText={orderType === 'limit' && inputAmount && (parseFloat(price) || currentPrice) ?
+                    `≈ ${(parseFloat(inputAmount) / (parseFloat(price) || currentPrice || 1)).toFixed(8)} ${pair ? pair.split('_')[0] : ''}`
                     : undefined
                   }
                 />
@@ -460,8 +460,8 @@ export default function TradingPage() {
                 <p className="text-sm text-neutral-500">無掛單委託</p>
               ) : (
                 openOrders.map((order) => (
-                  <div 
-                    key={order.id} 
+                  <div
+                    key={order.id}
                     className="p-3 bg-neutral-50 rounded-lg space-y-2"
                   >
                     <div className="flex items-center justify-between">
@@ -469,11 +469,10 @@ export default function TradingPage() {
                         <span className="text-sm font-medium">
                           {order.pair.replace('_', '/').toUpperCase()}
                         </span>
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                          order.action.toLowerCase() === 'buy' 
-                            ? 'bg-success-100 text-success-700' 
-                            : 'bg-danger-100 text-danger-700'
-                        }`}>
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${order.action.toLowerCase() === 'buy'
+                          ? 'bg-success-100 text-success-700'
+                          : 'bg-danger-100 text-danger-700'
+                          }`}>
                           {order.action.toLowerCase() === 'buy' ? '買' : '賣'}
                         </span>
                       </div>

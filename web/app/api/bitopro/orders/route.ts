@@ -18,15 +18,15 @@ export async function GET(request: NextRequest) {
     // 從 query parameters 讀取幣種
     const searchParams = request.nextUrl.searchParams;
     const pairsParam = searchParams.get('pairs');
-    
+
     // 解析幣種
-    const pairs = pairsParam 
+    const pairs = pairsParam
       ? pairsParam.split(',').map(p => p.trim().toLowerCase())
       : ['btc_twd', 'eth_twd', 'ada_twd']; // 預設幣種
 
     const api = new BitoProAPI({ apiKey, apiSecret, email });
     const allOrders: any[] = [];
-    
+
     for (const pair of pairs) {
       try {
         const result = await api.getAllOrders(pair, 'ALL', 1000);
@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
         // 忽略錯誤，繼續下一個幣種
       }
     }
-    
+
     // 去除重複訂單（根據 id）
-    const uniqueOrders = allOrders.filter((order, index, self) => 
+    const uniqueOrders = allOrders.filter((order, index, self) =>
       index === self.findIndex(o => o.id === order.id)
     );
-    
+
     // 按時間排序（最新的在前）
     uniqueOrders.sort((a, b) => (b.createdTimestamp || 0) - (a.createdTimestamp || 0));
 
