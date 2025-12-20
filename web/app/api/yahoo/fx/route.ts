@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import yahooFinance from 'yahoo-finance2';
 
+// 強制動態渲染
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // 從 Yahoo Finance 取得 USD/TWD 匯率

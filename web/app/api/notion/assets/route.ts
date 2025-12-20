@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 
+// 強制動態渲染
+export const dynamic = 'force-dynamic';
+
 // 初始化 Notion 客戶端
 const notion = new Client({
   auth: process.env.NOTION_API_TOKEN,
@@ -17,7 +20,7 @@ interface AssetSummary {
 // 從 Notion page 中提取屬性值
 function getPropertyValue(property: any): string | number | null {
   if (!property) return null;
-  
+
   switch (property.type) {
     case 'title':
       return property.title?.[0]?.plain_text || '';
@@ -91,7 +94,7 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch Notion assets:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch assets from Notion',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

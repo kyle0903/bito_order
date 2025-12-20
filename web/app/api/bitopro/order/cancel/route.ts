@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import BitoProAPI from '@/lib/bitopro';
 
+// 強制動態渲染，避免 Vercel 靜態渲染錯誤
+export const dynamic = 'force-dynamic';
+
 export async function DELETE(request: NextRequest) {
   try {
     const apiKey = request.headers.get('X-API-Key');
@@ -31,7 +34,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Failed to cancel order:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to cancel order',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

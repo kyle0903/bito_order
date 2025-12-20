@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 
+// 強制動態渲染
+export const dynamic = 'force-dynamic';
+
 // 初始化 Notion 客戶端
 const notion = new Client({
   auth: process.env.NOTION_API_TOKEN,

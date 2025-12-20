@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import BitoProAPI from '@/lib/bitopro';
 
+// 強制動態渲染，避免 Vercel 靜態渲染錯誤
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const apiKey = request.headers.get('X-API-Key');

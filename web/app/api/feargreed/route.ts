@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// 強制動態渲染
+export const dynamic = 'force-dynamic';
+
 interface FearGreedData {
   value: string;
   value_classification: string;
@@ -27,14 +30,14 @@ export async function GET() {
     }
 
     const data: FearGreedResponse = await response.json();
-    
+
     if (!data.data || data.data.length === 0) {
       throw new Error('No data available');
     }
 
     const latestData = data.data[0];
     const value = parseInt(latestData.value);
-    
+
     // 根據數值決定顏色
     let color = '#6B7280'; // neutral
     if (value <= 25) {
