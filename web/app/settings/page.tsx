@@ -6,7 +6,8 @@ import Card, { CardHeader, CardContent } from '@/components/Card';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { useCredentials } from '@/hooks/useCredentials';
-import { fetchWithCredentials } from '@/lib/api';
+import { useNotionCredentials } from '@/hooks/useNotionCredentials';
+import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
 
 interface BalanceItem {
   currency: string;
@@ -16,19 +17,33 @@ interface BalanceItem {
 
 export default function SettingsPage() {
   const { credentials, isConfigured, isLoading, saveCredentials, clearCredentials } = useCredentials();
+  const {
+    credentials: notionCredentials,
+    isConfigured: isNotionConfigured,
+    isLoading: isNotionLoading,
+    saveCredentials: saveNotionCredentials,
+    clearCredentials: clearNotionCredentials
+  } = useNotionCredentials();
 
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [email, setEmail] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 連線測試狀態
+  // Notion 設定狀態
+  const [notionApiToken, setNotionApiToken] = useState('');
+  const [notionDatabaseId, setNotionDatabaseId] = useState('');
+  const [notionSaveSuccess, setNotionSaveSuccess] = useState(false);
+  const [notionConnectionStatus, setNotionConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [notionConnectionMessage, setNotionConnectionMessage] = useState('');
+
+  // BitoPro 連線測試狀態
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [connectionMessage, setConnectionMessage] = useState('');
   const [accountBalances, setAccountBalances] = useState<BalanceItem[]>([]);
   const [lastTestTime, setLastTestTime] = useState<Date | null>(null);
 
-  // 載入現有憑證
+  // 載入現有 BitoPro 憑證
   useEffect(() => {
     if (credentials) {
       setApiKey(credentials.apiKey);
@@ -36,6 +51,14 @@ export default function SettingsPage() {
       setEmail(credentials.email);
     }
   }, [credentials]);
+
+  // 載入現有 Notion 憑證
+  useEffect(() => {
+    if (notionCredentials) {
+      setNotionApiToken(notionCredentials.apiToken);
+      setNotionDatabaseId(notionCredentials.databaseId);
+    }
+  }, [notionCredentials]);
 
   // 測試 API 連線
   const testConnection = useCallback(async () => {
@@ -80,7 +103,7 @@ export default function SettingsPage() {
   };
 
   const handleClear = () => {
-    if (confirm('確定要清除您的 API 憑證嗎？')) {
+    if (confirm('確定要清除您的 BitoPro API 憑證嗎？')) {
       clearCredentials();
       setApiKey('');
       setApiSecret('');
@@ -89,6 +112,56 @@ export default function SettingsPage() {
       setAccountBalances([]);
     }
   };
+
+  // Notion 儲存
+  const handleNotionSave = () => {
+    saveNotionCredentials({ apiToken: notionApiToken, databaseId: notionDatabaseId });
+    setNotionSaveSuccess(true);
+    setNotionConnectionStatus('idle');
+    setTimeout(() => setNotionSaveSuccess(false), 3000);
+  };
+
+  // Notion 清除
+  const handleNotionClear = () => {
+    if (confirm('確定要清除您的 Notion 憑證嗎？')) {
+      clearNotionCredentials();
+      setNotionApiToken('');
+      setNotionDatabaseId('');
+      setNotionConnectionStatus('idle');
+    }
+  };
+
+  // 測試 Notion 連線
+  const testNotionConnection = useCallback(async () => {
+    if (!isNotionConfigured) return;
+
+    setNotionConnectionStatus('testing');
+    setNotionConnectionMessage('正在測試連線...');
+
+    try {
+      const response = await fetchWithNotionCredentials('/api/notion/assets', notionCredentials);
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotionConnectionStatus('success');
+        setNotionConnectionMessage(`連線成功！找到 ${data.data?.length || 0} 項資產`);
+      } else {
+        const errorData = await response.json();
+        setNotionConnectionStatus('error');
+        setNotionConnectionMessage(errorData.error || 'Notion 連線失敗');
+      }
+    } catch (err) {
+      setNotionConnectionStatus('error');
+      setNotionConnectionMessage(err instanceof Error ? err.message : '連線失敗');
+    }
+  }, [notionCredentials, isNotionConfigured]);
+
+  // 自動測試 Notion 連線
+  useEffect(() => {
+    if (isNotionConfigured && notionConnectionStatus === 'idle') {
+      testNotionConnection();
+    }
+  }, [isNotionConfigured, notionConnectionStatus, testNotionConnection]);
 
   return (
     <DashboardLayout title="設定">
@@ -157,22 +230,82 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* 關於 */}
+          {/* Notion 設定 */}
           <Card>
             <CardHeader>
-              <h3 className="text-base font-semibold text-neutral-100">關於</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-neutral-400">版本</span>
-                  <span className="font-medium text-neutral-100">1.0.0</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-neutral-100">Notion 設定</h3>
+                  <p className="text-sm text-neutral-400 mt-1">
+                    連結您的 Notion 資產資料庫
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-400">API 版本</span>
-                  <span className="font-medium text-neutral-100">v3</span>
-                </div>
+                <span className={`px-2 py-1 text-xs font-medium rounded ${isNotionLoading ? 'bg-neutral-800 text-neutral-400' :
+                  isNotionConfigured ? 'bg-success-900/30 text-success-400' : 'bg-warning-900/30 text-warning-400'
+                  }`}>
+                  {isNotionLoading ? '載入中...' : isNotionConfigured ? '已設定' : '未設定'}
+                </span>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                label="Notion API Token"
+                type="password"
+                placeholder="輸入您的 Notion Integration Token"
+                value={notionApiToken}
+                onChange={(e) => setNotionApiToken(e.target.value)}
+                helperText="在 Notion Integrations 頁面建立整合後取得"
+              />
+              <Input
+                label="Database ID"
+                type="text"
+                placeholder="輸入您的資產資料庫 ID"
+                value={notionDatabaseId}
+                onChange={(e) => setNotionDatabaseId(e.target.value)}
+                helperText="從資料庫 URL 中複製 (notion.so/xxxxx?v=...)"
+              />
+
+              {/* 連線狀態 */}
+              {isNotionConfigured && (
+                <div className="p-3 rounded-lg bg-neutral-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${notionConnectionStatus === 'success' ? 'bg-success-500' :
+                      notionConnectionStatus === 'error' ? 'bg-danger-500' :
+                        notionConnectionStatus === 'testing' ? 'bg-warning-500 animate-pulse' :
+                          'bg-neutral-600'
+                      }`} />
+                    <p className={`text-sm ${notionConnectionStatus === 'success' ? 'text-success-400' :
+                      notionConnectionStatus === 'error' ? 'text-danger-400' :
+                        'text-neutral-300'
+                      }`}>
+                      {notionConnectionMessage || '尚未測試'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  variant="primary"
+                  onClick={handleNotionSave}
+                  disabled={!notionApiToken || !notionDatabaseId}
+                >
+                  {notionSaveSuccess ? '✓ 已儲存！' : '儲存設定'}
+                </Button>
+                {isNotionConfigured && (
+                  <>
+                    <Button variant="secondary" onClick={testNotionConnection} disabled={notionConnectionStatus === 'testing'}>
+                      {notionConnectionStatus === 'testing' ? '測試中...' : '測試連線'}
+                    </Button>
+                    <Button variant="secondary" onClick={handleNotionClear}>
+                      清除設定
+                    </Button>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-neutral-500">
+                您的 Notion 憑證將加密儲存在瀏覽器本機中。
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -324,6 +457,25 @@ export default function SettingsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                   </svg>
                 </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 關於 */}
+          <Card>
+            <CardHeader>
+              <h3 className="text-base font-semibold text-neutral-100">關於</h3>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">版本</span>
+                  <span className="font-medium text-neutral-100">1.0.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">API 版本</span>
+                  <span className="font-medium text-neutral-100">v3</span>
+                </div>
               </div>
             </CardContent>
           </Card>

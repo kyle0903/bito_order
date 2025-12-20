@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import AssetPieChart from '@/components/AssetPieChart';
+import { useNotionCredentials } from '@/hooks/useNotionCredentials';
+import { fetchWithNotionCredentials } from '@/lib/api';
+import Link from 'next/link';
 
 // Notion 資料介面
 interface NotionAsset {
@@ -36,9 +39,11 @@ interface FearGreedData {
 }
 
 export default function Home() {
+  const { credentials: notionCredentials, isConfigured: isNotionConfigured, isLoading: isNotionLoading } = useNotionCredentials();
   const [assets, setAssets] = useState<AssetDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notionNotConfigured, setNotionNotConfigured] = useState(false);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
   const [showAmounts, setShowAmounts] = useState(true);
@@ -113,15 +118,28 @@ export default function Home() {
 
   // 獲取資產資料
   const fetchAssets = useCallback(async () => {
+    // 如果 Notion 未設定，不繼續取得資料
+    if (!isNotionConfigured) {
+      setNotionNotConfigured(true);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      setNotionNotConfigured(false);
 
-      // 從 Notion 取得資產資料
-      const response = await fetch('/api/notion/assets');
+      // 從 Notion 取得資產資料，帶上憑證
+      const response = await fetchWithNotionCredentials('/api/notion/assets', notionCredentials);
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.notConfigured) {
+          setNotionNotConfigured(true);
+          setLoading(false);
+          return;
+        }
         throw new Error(errorData.error || 'Failed to fetch assets from Notion');
       }
 
@@ -156,8 +174,18 @@ export default function Home() {
       });
 
       setAssets(assetsWithPrices);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Failed to fetch assets:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isNotionConfigured, notionCredentials]);
 
-      // 從 Yahoo Finance 取得 USD/TWD 匯率
+  // 獨立取得匯率和恐懼貪婪指數（不依賴 Notion）
+  useEffect(() => {
+    // 從 Yahoo Finance 取得 USD/TWD 匯率
+    const fetchExchangeRate = async () => {
       try {
         const fxResponse = await fetch('/api/yahoo/fx');
         if (fxResponse.ok) {
@@ -170,8 +198,10 @@ export default function Home() {
       } catch {
         setExchangeRates({ USD: 32 }); // 預設匯率
       }
+    };
 
-      // 取得恐懼貪婪指數
+    // 取得恐懼貪婪指數
+    const fetchFearGreed = async () => {
       try {
         const fgResponse = await fetch('/api/feargreed');
         if (fgResponse.ok) {
@@ -183,17 +213,18 @@ export default function Home() {
       } catch {
         // 失敗時不顯示指數
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error('Failed to fetch assets:', err);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchExchangeRate();
+    fetchFearGreed();
   }, []);
 
+  // 當 Notion 設定改變時重新取得資料
   useEffect(() => {
-    fetchAssets();
-  }, [fetchAssets]);
+    if (!isNotionLoading) {
+      fetchAssets();
+    }
+  }, [isNotionLoading, fetchAssets]);
 
   // 計算有價格的資產總價值 (TWD)
   const totalValueTWD = assets
@@ -238,6 +269,27 @@ export default function Home() {
 
   return (
     <DashboardLayout title="資產總覽">
+      {/* Notion 未設定警告 */}
+      {notionNotConfigured && (
+        <div className="mb-6 p-4 rounded-lg bg-warning-900/30 border border-warning-700/50">
+          <div className="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-warning-400 flex-shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-warning-300">尚未設定 Notion 連線</p>
+              <p className="text-xs text-warning-400/80 mt-0.5">請先設定 Notion API Token 和 Database ID 以載入您的資產資料</p>
+            </div>
+            <Link
+              href="/settings"
+              className="px-3 py-1.5 text-sm font-medium text-warning-300 bg-warning-900/50 hover:bg-warning-900 rounded-md transition-colors"
+            >
+              前往設定
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 總覽統計 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -383,8 +435,8 @@ export default function Home() {
             <button
               onClick={() => setChartMode('value')}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'value'
-                  ? 'bg-neutral-700 text-neutral-100 shadow-sm'
-                  : 'text-neutral-400 hover:text-neutral-200'
+                ? 'bg-neutral-700 text-neutral-100 shadow-sm'
+                : 'text-neutral-400 hover:text-neutral-200'
                 }`}
             >
               現值比例
@@ -392,8 +444,8 @@ export default function Home() {
             <button
               onClick={() => setChartMode('cost')}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'cost'
-                  ? 'bg-neutral-700 text-neutral-100 shadow-sm'
-                  : 'text-neutral-400 hover:text-neutral-200'
+                ? 'bg-neutral-700 text-neutral-100 shadow-sm'
+                : 'text-neutral-400 hover:text-neutral-200'
                 }`}
             >
               成本比例

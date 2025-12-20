@@ -4,13 +4,6 @@ import { Client } from '@notionhq/client';
 // 強制動態渲染
 export const dynamic = 'force-dynamic';
 
-// 初始化 Notion 客戶端
-const notion = new Client({
-  auth: process.env.NOTION_API_TOKEN,
-});
-
-const DATABASE_ID = process.env.NOTION_DATABASE_ID || '';
-
 interface OrderInput {
   target: string;      // 幣種 (BTC, ETH 等)
   date: string;        // 日期 YYYY-MM-DD
@@ -20,19 +13,28 @@ interface OrderInput {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.NOTION_API_TOKEN) {
+    // 從 headers 讀取憑證
+    const apiToken = request.headers.get('X-Notion-Token');
+    const databaseId = request.headers.get('X-Notion-Database-Id');
+
+    if (!apiToken) {
       return NextResponse.json(
-        { error: 'Notion API Token 未設定' },
-        { status: 500 }
+        { error: 'Notion API Token 未設定', notConfigured: true },
+        { status: 401 }
       );
     }
 
-    if (!DATABASE_ID) {
+    if (!databaseId) {
       return NextResponse.json(
-        { error: 'Notion Database ID 未設定' },
-        { status: 500 }
+        { error: 'Notion Database ID 未設定', notConfigured: true },
+        { status: 401 }
       );
     }
+
+    // 動態建立 Notion 客戶端
+    const notion = new Client({
+      auth: apiToken,
+    });
 
     const body = await request.json();
     const orders: OrderInput[] = body.orders;
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(
       orders.map(async (order) => {
         const page = await notion.pages.create({
-          parent: { database_id: DATABASE_ID },
+          parent: { database_id: databaseId },
           properties: {
             Target: {
               select: {
@@ -96,3 +98,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

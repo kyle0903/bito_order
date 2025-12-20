@@ -1,15 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { Client } from '@notionhq/client';
 
 // 強制動態渲染
 export const dynamic = 'force-dynamic';
-
-// 初始化 Notion 客戶端
-const notion = new Client({
-  auth: process.env.NOTION_API_TOKEN,
-});
-
-const DATABASE_ID = process.env.NOTION_DATABASE_ID || '';
 
 interface AssetSummary {
   target: string;
@@ -37,25 +30,34 @@ function getPropertyValue(property: any): string | number | null {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    if (!process.env.NOTION_API_TOKEN) {
+    // 從 headers 讀取憑證
+    const apiToken = request.headers.get('X-Notion-Token');
+    const databaseId = request.headers.get('X-Notion-Database-Id');
+
+    if (!apiToken) {
       return NextResponse.json(
-        { error: 'Notion API Token 未設定' },
-        { status: 500 }
+        { error: 'Notion API Token 未設定', notConfigured: true },
+        { status: 401 }
       );
     }
 
-    if (!DATABASE_ID) {
+    if (!databaseId) {
       return NextResponse.json(
-        { error: 'Notion Database ID 未設定' },
-        { status: 500 }
+        { error: 'Notion Database ID 未設定', notConfigured: true },
+        { status: 401 }
       );
     }
+
+    // 動態建立 Notion 客戶端
+    const notion = new Client({
+      auth: apiToken,
+    });
 
     // 查詢 Notion Database 中的所有資料
     const response = await notion.databases.query({
-      database_id: DATABASE_ID,
+      database_id: databaseId,
     });
 
     // 彙總資料：按 Target 分組
@@ -102,3 +104,4 @@ export async function GET() {
     );
   }
 }
+
