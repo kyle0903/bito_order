@@ -271,13 +271,13 @@ export default function TradingPage() {
                         <div>
                           <p className="text-xs text-success-400 mb-1">買入價 (Bid)</p>
                           <p className="text-lg font-semibold text-success-400 tabular-nums">
-                            NT$ {bestBid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            NT$ {bestBid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-danger-400 mb-1">賣出價 (Ask)</p>
                           <p className="text-lg font-semibold text-danger-400 tabular-nums">
-                            NT$ {bestAsk.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            NT$ {bestAsk.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>
                       </div>
