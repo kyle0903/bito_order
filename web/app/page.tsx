@@ -46,7 +46,7 @@ export default function Home() {
   const [notionNotConfigured, setNotionNotConfigured] = useState(false);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
-  const [showAmounts, setShowAmounts] = useState(true);
+  const [showAmounts, setShowAmounts] = useState(false);
   const [chartMode, setChartMode] = useState<'value' | 'cost'>('value');
 
   // 從 localStorage 讀取顯示狀態

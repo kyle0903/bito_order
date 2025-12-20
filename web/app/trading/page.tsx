@@ -236,9 +236,9 @@ export default function TradingPage() {
 
   return (
     <DashboardLayout title="交易">
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左側：交易表單 */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <h3 className="text-base font-semibold text-neutral-100">下單</h3>
