@@ -163,6 +163,49 @@ export default function MarketPage() {
     setDragOverItem(null);
   };
 
+  // 觸控事件處理（手機支援）
+  const touchStartY = useRef<number>(0);
+  const touchCurrentPair = useRef<string | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent, pair: string) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchCurrentPair.current = pair;
+    setDraggedItem(pair);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchCurrentPair.current) return;
+    
+    const touch = e.touches[0];
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    
+    for (const el of elements) {
+      const pairAttr = el.getAttribute('data-pair');
+      if (pairAttr && pairAttr !== touchCurrentPair.current) {
+        setDragOverItem(pairAttr);
+        break;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (draggedItem && dragOverItem && draggedItem !== dragOverItem) {
+      const newOrder = [...displayOrder];
+      const draggedIndex = newOrder.indexOf(draggedItem);
+      const targetIndex = newOrder.indexOf(dragOverItem);
+
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(targetIndex, 0, draggedItem);
+
+      setDisplayOrder(newOrder);
+      saveDisplayOrder(newOrder);
+    }
+    
+    setDraggedItem(null);
+    setDragOverItem(null);
+    touchCurrentPair.current = null;
+  };
+
   // 重置為預設排序（按市值）
   const resetToDefaultOrder = () => {
     const sortedByMarketCap = [...tickers].sort(
@@ -306,13 +349,17 @@ export default function MarketPage() {
                   return (
                     <div
                       key={ticker.pair}
+                      data-pair={ticker.pair}
                       draggable
                       onDragStart={() => handleDragStart(ticker.pair)}
                       onDragOver={(e) => handleDragOver(e, ticker.pair)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, ticker.pair)}
                       onDragEnd={handleDragEnd}
-                      className={`px-4 md:px-6 py-4 transition-all cursor-grab active:cursor-grabbing ${
+                      onTouchStart={(e) => handleTouchStart(e, ticker.pair)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      className={`px-4 md:px-6 py-4 transition-all cursor-grab active:cursor-grabbing touch-none ${
                         isDragging
                           ? 'opacity-50 bg-neutral-800'
                           : isDragOver
