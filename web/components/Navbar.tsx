@@ -7,6 +7,7 @@ import { useCredentials } from '@/hooks/useCredentials';
 
 const navigation = [
     { name: '資產總覽', href: '/', icon: '◫' },
+    { name: '市場', href: '/market', icon: '⊞' },
     { name: '交易', href: '/trading', icon: '⇄' },
     { name: '歷史訂單', href: '/history', icon: '⋮' },
     { name: '設定', href: '/settings', icon: '⚙' },
