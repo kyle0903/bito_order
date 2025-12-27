@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import { useCredentials } from '@/hooks/useCredentials';
-import { fetchWithCredentials } from '@/lib/api';
+import { useNotionCredentials } from '@/hooks/useNotionCredentials';
+import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
 import Link from 'next/link';
 import Button from '@/components/Button';
 
@@ -43,6 +44,7 @@ const availablePairs = [
 
 export default function HistoryPage() {
   const { credentials, isConfigured } = useCredentials();
+  const { credentials: notionCredentials } = useNotionCredentials();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +170,7 @@ export default function HistoryPage() {
           };
         });
 
-      const response = await fetch('/api/notion/assets/add', {
+      const response = await fetchWithNotionCredentials('/api/notion/assets/add', notionCredentials, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orders: ordersToAdd }),
