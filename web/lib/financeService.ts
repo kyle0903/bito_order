@@ -167,12 +167,53 @@ export async function getStockQuote(symbol: string): Promise<StockQuote | null> 
  * 從免費 API 獲取股票報價
  */
 async function fetchStockQuote(symbol: string): Promise<StockQuote | null> {
-  // API 1: Financial Modeling Prep（每日 250 次免費請求）
-  // 需要免費 API key，但這裡先用無 key 的 demo
+  // API 1: 使用 Chart API（較穩定，可取得變化資料）
+  try {
+    console.log(`[Finance] Fetching stock ${symbol} from Chart API...`);
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`,
+      { 
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      const result = data?.chart?.result?.[0];
+      const meta = result?.meta;
+      
+      if (meta?.regularMarketPrice) {
+        const currentPrice = meta.regularMarketPrice;
+        const previousClose = meta.previousClose || meta.chartPreviousClose || currentPrice;
+        const change = currentPrice - previousClose;
+        const changePercent = previousClose > 0 
+          ? (change / previousClose * 100) 
+          : 0;
+        
+        console.log(`[Finance] Stock ${symbol}: $${currentPrice} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+        return {
+          symbol: meta.symbol || symbol.toUpperCase(),
+          price: currentPrice,
+          change: change,
+          changePercent: changePercent,
+          currency: meta.currency || 'USD',
+          source: 'Chart API',
+        };
+      }
+    }
+  } catch (error) {
+    console.warn(`[Finance] Chart API failed for ${symbol}:`, error);
+  }
+
+  // API 2: Financial Modeling Prep 完整報價（備用）
   try {
     console.log(`[Finance] Fetching stock ${symbol} from FMP...`);
     const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/quote-short/${symbol}?apikey=demo`,
+      `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=demo`,
       { 
         headers: { 'Accept': 'application/json' },
         signal: AbortSignal.timeout(5000),
@@ -183,12 +224,12 @@ async function fetchStockQuote(symbol: string): Promise<StockQuote | null> {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         const quote = data[0];
-        console.log(`[Finance] Stock ${symbol} from FMP: $${quote.price}`);
+        console.log(`[Finance] Stock ${symbol} from FMP: $${quote.price} (${quote.changesPercentage}%)`);
         return {
           symbol: symbol.toUpperCase(),
           price: quote.price || 0,
-          change: 0,
-          changePercent: 0,
+          change: quote.change || 0,
+          changePercent: quote.changesPercentage || 0,
           currency: 'USD',
           source: 'FMP',
         };
@@ -196,44 +237,6 @@ async function fetchStockQuote(symbol: string): Promise<StockQuote | null> {
     }
   } catch (error) {
     console.warn(`[Finance] FMP API failed for ${symbol}:`, error);
-  }
-
-  // API 2: 使用 Google Finance 非官方 API（備用）
-  try {
-    console.log(`[Finance] Fetching stock ${symbol} from alternative source...`);
-    // 這是一個公開的股票資訊 API
-    const response = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,
-      { 
-        headers: { 
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-    
-    if (response.ok) {
-      const data = await response.json();
-      const result = data?.chart?.result?.[0];
-      const meta = result?.meta;
-      
-      if (meta?.regularMarketPrice) {
-        console.log(`[Finance] Stock ${symbol}: $${meta.regularMarketPrice}`);
-        return {
-          symbol: meta.symbol || symbol.toUpperCase(),
-          price: meta.regularMarketPrice,
-          change: (meta.regularMarketPrice - meta.previousClose) || 0,
-          changePercent: meta.previousClose 
-            ? ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100)
-            : 0,
-          currency: meta.currency || 'USD',
-          source: 'Chart API',
-        };
-      }
-    }
-  } catch (error) {
-    console.warn(`[Finance] Chart API failed for ${symbol}:`, error);
   }
 
   return null;
