@@ -81,7 +81,7 @@ export default function Home() {
     // 如果是股票，從 Yahoo Finance 取得價格
     if (STOCK_SYMBOLS.includes(symbol.toUpperCase())) {
       try {
-        const response = await fetch(`/api/yahoo/${symbol.toUpperCase()}`);
+        const response = await fetch(`/api/finance/stock/${symbol.toUpperCase()}`);
         if (!response.ok) return { price: 0, priceChange24hr: 0, hasTWDPair: false };
 
         const data = await response.json();
@@ -187,7 +187,7 @@ export default function Home() {
     // 從 Yahoo Finance 取得 USD/TWD 匯率
     const fetchExchangeRate = async () => {
       try {
-        const fxResponse = await fetch('/api/yahoo/fx');
+        const fxResponse = await fetch('/api/finance/fx');
         if (fxResponse.ok) {
           const fxData = await fxResponse.json();
           const usdRate = fxData.data?.rate || 32;
