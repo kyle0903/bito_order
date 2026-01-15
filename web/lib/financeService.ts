@@ -178,6 +178,8 @@ async function fetchStockQuote(symbol: string): Promise<StockQuote | null> {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         },
         signal: AbortSignal.timeout(8000),
+        cache: 'no-store',  // 禁用 Next.js fetch 快取
+        next: { revalidate: 0 },  // 確保不使用 ISR 快取
       }
     );
     
