@@ -94,8 +94,6 @@ export default function AssetPieChart({ assets, mode, showAmounts }: AssetPieCha
             dataKey="value"
             label={renderLabel}
             labelLine={false}
-            isAnimationActive={false}
-            animationDuration={0}
           >
             {chartData.map((entry, index) => (
               <Cell 
