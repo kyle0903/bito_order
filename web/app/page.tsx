@@ -85,7 +85,7 @@ export default function Home() {
   };
 
   // 股票列表（需要從 Yahoo Finance 取得價格）
-  const STOCK_SYMBOLS = ['CRCL'];
+  const STOCK_SYMBOLS = ['CRCL', '0050.TW'];
 
   // 獲取單一交易對的價格和24小時變化
   const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean }> => {
