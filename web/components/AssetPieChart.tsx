@@ -69,7 +69,7 @@ export default function AssetPieChart({ assets, mode, showAmounts }: AssetPieCha
   const renderLabel = (props: PieLabelRenderProps): string | undefined => {
     const { name, percent } = props;
     if (typeof percent !== 'number' || percent < 0.05) return undefined;
-    return `${name || ''} ${(percent * 100).toFixed(0)}%`;
+    return `${name || ''} ${(percent * 100).toFixed(1)}%`;
   };
 
   if (chartData.length === 0) {
@@ -94,16 +94,17 @@ export default function AssetPieChart({ assets, mode, showAmounts }: AssetPieCha
             dataKey="value"
             label={renderLabel}
             labelLine={false}
+            isAnimationActive={false}
+            animationDuration={0}
           >
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${entry.name}`} 
                 fill={COLORS[index % COLORS.length]}
-                className="transition-opacity hover:opacity-80"
               />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} isAnimationActive={false} cursor={false} />
           <Legend 
             formatter={(value) => <span className="text-xs text-neutral-600">{value}</span>}
           />
