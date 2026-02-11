@@ -64,10 +64,24 @@ export default function Home() {
     localStorage.setItem('showAssetAmounts', String(newValue));
   };
 
+  const sanitizeDisplayNumber = (value: number, maximumFractionDigits = 8): number => {
+    const precisionThreshold = 0.5 * Math.pow(10, -maximumFractionDigits);
+    if (Math.abs(value) < precisionThreshold || Object.is(value, -0)) {
+      return 0;
+    }
+    return value;
+  };
+
+  const hasQuantity = (quantity: number): boolean => {
+    return sanitizeDisplayNumber(quantity, 8) !== 0;
+  };
+
   // 格式化顯示金額（根據 showAmounts 狀態）
   const formatAmount = (amount: number, options?: Intl.NumberFormatOptions) => {
     if (!showAmounts) return '******';
-    return amount.toLocaleString('en-US', options);
+    const maxFractionDigits = options?.maximumFractionDigits ?? 8;
+    const displayAmount = sanitizeDisplayNumber(amount, maxFractionDigits);
+    return displayAmount.toLocaleString('en-US', options);
   };
 
   // 股票列表（需要從 Yahoo Finance 取得價格）
@@ -539,7 +553,7 @@ export default function Home() {
                           </div>
                         </div>
                         {/* 損益率 */}
-                        {asset.hasTWDPair && asset.totalAmount > 0 && (
+                        {asset.hasTWDPair && asset.totalAmount > 0 && hasQuantity(asset.quantity) && (
                           <span className={`text-sm font-semibold ${getProfitLossRate(asset) >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                             {getProfitLossRate(asset) >= 0 ? '+' : ''}{getProfitLossRate(asset).toFixed(2)}%
                           </span>
@@ -626,7 +640,7 @@ export default function Home() {
                           )}
                         </div>
                         <div className="text-right w-24">
-                          {asset.hasTWDPair && asset.totalAmount > 0 ? (
+                          {asset.hasTWDPair && asset.totalAmount > 0 && hasQuantity(asset.quantity) ? (
                             <>
                               <p className={`text-sm font-semibold tabular-nums ${getProfitLossRate(asset) >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                                 {getProfitLossRate(asset) >= 0 ? '+' : ''}{getProfitLossRate(asset).toFixed(2)}%
