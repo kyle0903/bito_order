@@ -52,7 +52,7 @@ export default function MarketPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/bitopro/tickers');
+      const response = await fetch('/api/bitopro/tickers', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Failed to fetch tickers');
       }

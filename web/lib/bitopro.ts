@@ -143,7 +143,9 @@ class BitoProAPI {
 
   // 獲取交易對資訊
   static async getTradingPairs() {
-    const response = await fetch(`${BASE_URL}/tickers`);
+    const response = await fetch(`${BASE_URL}/tickers`, {
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch trading pairs: ${response.status}`);
