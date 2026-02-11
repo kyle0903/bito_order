@@ -35,15 +35,20 @@ export async function GET(
       });
     }
 
-    const twdPrice = stockQuote.price * usdToTwd;
+    const quoteCurrency = (stockQuote.currency || 'USD').toUpperCase();
+    const isTwdQuote = quoteCurrency === 'TWD';
+    const twdPrice = isTwdQuote ? stockQuote.price : stockQuote.price * usdToTwd;
+    const usdPrice = isTwdQuote && usdToTwd > 0
+      ? stockQuote.price / usdToTwd
+      : stockQuote.price;
 
     return NextResponse.json({
       success: true,
       data: {
         symbol: stockQuote.symbol,
-        priceUSD: stockQuote.price,
+        priceUSD: usdPrice,
         priceTWD: twdPrice,
-        currency: stockQuote.currency,
+        currency: quoteCurrency,
         usdToTwdRate: usdToTwd,
         priceChange: stockQuote.change,
         priceChangePercent: stockQuote.changePercent,

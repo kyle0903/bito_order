@@ -25,6 +25,7 @@ interface AssetDisplay {
   priceChange24hr: number;
   valueTWD: number;      // 當前市值 (quantity * price)
   hasTWDPair: boolean;   // 是否有台幣交易對
+  quoteCurrency?: string;
 }
 
 interface ExchangeRates {
@@ -88,9 +89,9 @@ export default function Home() {
   const STOCK_SYMBOLS = ['CRCL', '0050.TW'];
 
   // 獲取單一交易對的價格和24小時變化
-  const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean }> => {
+  const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean; quoteCurrency?: string }> => {
     // TWD 本身價值為 1，無變化
-    if (symbol === 'TWD') return { price: 1, priceChange24hr: 0, hasTWDPair: true };
+    if (symbol === 'TWD') return { price: 1, priceChange24hr: 0, hasTWDPair: true, quoteCurrency: 'TWD' };
 
     // 如果是股票，從 Yahoo Finance 取得價格
     if (STOCK_SYMBOLS.includes(symbol.toUpperCase())) {
@@ -101,11 +102,13 @@ export default function Home() {
         const data = await response.json();
         const twdPrice = data.data?.priceTWD || 0;
         const priceChangePercent = data.data?.priceChangePercent || 0;
+        const quoteCurrency = (data.data?.currency || '').toUpperCase();
 
         return {
           price: twdPrice,
           priceChange24hr: priceChangePercent,
           hasTWDPair: twdPrice > 0,
+          quoteCurrency,
         };
       } catch {
         return { price: 0, priceChange24hr: 0, hasTWDPair: false };
@@ -124,6 +127,7 @@ export default function Home() {
         price,
         priceChange24hr: parseFloat(data.data?.priceChange24hr) || 0,
         hasTWDPair: price > 0,
+        quoteCurrency: 'TWD',
       };
     } catch {
       return { price: 0, priceChange24hr: 0, hasTWDPair: false };
@@ -164,7 +168,7 @@ export default function Home() {
       const assetsWithPrices: AssetDisplay[] = await Promise.all(
         notionAssets.map(async (asset: NotionAsset) => {
           const symbol = asset.target.toUpperCase();
-          const { price, priceChange24hr, hasTWDPair } = await fetchTickerData(symbol);
+          const { price, priceChange24hr, hasTWDPair, quoteCurrency } = await fetchTickerData(symbol);
           const valueTWD = hasTWDPair ? asset.totalQuantity * price : 0;
 
           return {
@@ -176,6 +180,7 @@ export default function Home() {
             priceChange24hr,
             valueTWD,
             hasTWDPair,
+            quoteCurrency,
           };
         })
       );
@@ -279,6 +284,9 @@ export default function Home() {
 
   // 統計有/無價格的資產數量
   const assetsWithoutPrice = assets.filter(a => !a.hasTWDPair);
+  const shouldShowUsdForAsset = (asset: AssetDisplay): boolean => {
+    return asset.quoteCurrency !== 'TWD';
+  };
 
 
   return (
@@ -601,7 +609,7 @@ export default function Home() {
                             {asset.hasTWDPair ? (
                               <>
                                 <p>NT$ {asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                {exchangeRates?.USD && exchangeRates.USD > 0 && (
+                                {exchangeRates?.USD && exchangeRates.USD > 0 && shouldShowUsdForAsset(asset) && (
                                   <p>≈ ${(asset.price / exchangeRates.USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</p>
                                 )}
                               </>
@@ -629,7 +637,7 @@ export default function Home() {
                               <p className="text-sm font-semibold text-neutral-100 tabular-nums">
                                 NT$ {formatAmount(asset.valueTWD, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
-                              {exchangeRates?.USD && exchangeRates.USD > 0 && (
+                              {exchangeRates?.USD && exchangeRates.USD > 0 && shouldShowUsdForAsset(asset) && (
                                 <p className="text-xs text-neutral-400 tabular-nums">
                                   ≈ ${formatAmount(asset.valueTWD / exchangeRates.USD, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                                 </p>
