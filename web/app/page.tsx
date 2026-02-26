@@ -285,7 +285,8 @@ export default function Home() {
   // 統計有/無價格的資產數量
   const assetsWithoutPrice = assets.filter(a => !a.hasTWDPair);
   const shouldShowUsdForAsset = (asset: AssetDisplay): boolean => {
-    return asset.quoteCurrency !== 'TWD';
+    // .TW 結尾的台股不顯示 USD，其他資產（加密貨幣、美股等）都顯示 USD
+    return !asset.symbol.toUpperCase().endsWith('.TW');
   };
 
 
