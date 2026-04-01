@@ -85,53 +85,58 @@ export default function Home() {
     return displayAmount.toLocaleString('en-US', options);
   };
 
-  // 股票列表（需要從 Yahoo Finance 取得價格）
-  const STOCK_SYMBOLS = ['CRCL', '0050.TW'];
-
   // 獲取單一交易對的價格和24小時變化
   const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean; quoteCurrency?: string }> => {
     // TWD 本身價值為 1，無變化
     if (symbol === 'TWD') return { price: 1, priceChange24hr: 0, hasTWDPair: true, quoteCurrency: 'TWD' };
 
-    // 如果是股票，從 Yahoo Finance 取得價格
-    if (STOCK_SYMBOLS.includes(symbol.toUpperCase())) {
-      try {
-        const response = await fetch(`/api/finance/stock/${symbol.toUpperCase()}`);
-        if (!response.ok) return { price: 0, priceChange24hr: 0, hasTWDPair: false };
+    // 1. 先嘗試從 BitoPro 取得加密貨幣價格
+    try {
+      const pair = `${symbol.toLowerCase()}_twd`;
+      const response = await fetch(`/api/bitopro/ticker/${pair}`);
 
+      if (response.ok) {
+        const data = await response.json();
+        const price = parseFloat(data.data?.lastPrice) || 0;
+
+        if (price > 0) {
+          return {
+            price,
+            priceChange24hr: parseFloat(data.data?.priceChange24hr) || 0,
+            hasTWDPair: true,
+            quoteCurrency: 'TWD',
+          };
+        }
+      }
+    } catch {
+      // BitoPro 失敗，繼續嘗試 Yahoo Finance
+    }
+
+    // 2. 如果 BitoPro 沒有，嘗試從 Yahoo Finance 取得股票價格
+    try {
+      const response = await fetch(`/api/finance/stock/${symbol.toUpperCase()}`);
+
+      if (response.ok) {
         const data = await response.json();
         const twdPrice = data.data?.priceTWD || 0;
         const priceChangePercent = data.data?.priceChangePercent || 0;
         const quoteCurrency = (data.data?.currency || '').toUpperCase();
 
-        return {
-          price: twdPrice,
-          priceChange24hr: priceChangePercent,
-          hasTWDPair: twdPrice > 0,
-          quoteCurrency,
-        };
-      } catch {
-        return { price: 0, priceChange24hr: 0, hasTWDPair: false };
+        if (twdPrice > 0) {
+          return {
+            price: twdPrice,
+            priceChange24hr: priceChangePercent,
+            hasTWDPair: true,
+            quoteCurrency,
+          };
+        }
       }
-    }
-
-    // 其他加密貨幣從 BitoPro 取得價格
-    try {
-      const pair = `${symbol.toLowerCase()}_twd`;
-      const response = await fetch(`/api/bitopro/ticker/${pair}`);
-      if (!response.ok) return { price: 0, priceChange24hr: 0, hasTWDPair: false };
-
-      const data = await response.json();
-      const price = parseFloat(data.data?.lastPrice) || 0;
-      return {
-        price,
-        priceChange24hr: parseFloat(data.data?.priceChange24hr) || 0,
-        hasTWDPair: price > 0,
-        quoteCurrency: 'TWD',
-      };
     } catch {
-      return { price: 0, priceChange24hr: 0, hasTWDPair: false };
+      // Yahoo Finance 也失敗
     }
+
+    // 3. 兩個來源都找不到，返回錯誤狀態
+    return { price: 0, priceChange24hr: 0, hasTWDPair: false };
   };
 
   // 獲取資產資料
