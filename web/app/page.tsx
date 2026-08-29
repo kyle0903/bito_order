@@ -351,7 +351,7 @@ export default function Home() {
                 </span>
               )}
             </div>
-            <p className="text-2xl font-semibold text-white tabular-nums">
+            <p className="text-3xl font-bold text-primary-300 tabular-nums">
               {loading ? '...' : `NT$ ${formatAmount(totalValueTWD, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -383,10 +383,10 @@ export default function Home() {
               )}
             </div>
             {loading ? (
-              <p className="text-2xl font-semibold text-neutral-100">...</p>
+              <p className="text-3xl font-bold text-neutral-100">...</p>
             ) : (
               <>
-                <p className={`text-2xl font-semibold tabular-nums ${totalProfitLoss >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                <p className={`text-3xl font-bold tabular-nums ${totalProfitLoss >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                   {totalProfitLoss >= 0 ? '+' : ''}NT$ {formatAmount(totalProfitLoss, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
@@ -406,9 +406,9 @@ export default function Home() {
             {!exchangeRates ? (
               <p className="text-lg font-semibold text-neutral-100">Loading...</p>
             ) : exchangeRates.USD > 0 ? (
-              <div className="text-sm font-semibold text-neutral-100 space-y-1">
-                <p className="tabular-nums">1 USD = NT$ {exchangeRates.USD}</p>
-                <p className="tabular-nums text-xs text-neutral-400">USD/TWD</p>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold text-primary-300 tabular-nums">NT$ {exchangeRates.USD}</p>
+                <p className="tabular-nums text-xs text-neutral-400">1 USD/TWD</p>
               </div>
             ) : (
               <p className="text-lg font-semibold text-danger-400">Failed</p>
@@ -425,7 +425,7 @@ export default function Home() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="text-2xl font-bold tabular-nums"
+                    className="text-3xl font-bold tabular-nums"
                     style={{ color: fearGreed.color }}
                   >
                     {fearGreed.value}
@@ -530,13 +530,13 @@ export default function Home() {
           ) : (
             <div className="overflow-x-auto">
               {/* 表頭 - 僅桌面版顯示 */}
-              <div className="hidden md:flex px-6 py-3 border-b border-neutral-800 items-center justify-between bg-neutral-800/50">
-                <span className="text-xs font-medium text-neutral-400 uppercase">資產</span>
+              <div className="hidden md:flex px-6 py-3 items-center justify-between bg-neutral-800">
+                <span className="text-xs font-semibold text-neutral-100 uppercase tracking-wide">資產</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-24">數量</span>
-                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-28">成本</span>
-                  <span className="text-xs font-medium text-neutral-400 uppercase text-right min-w-[120px]">現值 (TWD)</span>
-                  <span className="text-xs font-medium text-neutral-400 uppercase text-right w-24">損益率</span>
+                  <span className="text-xs font-semibold text-neutral-100 uppercase tracking-wide text-right w-24">數量</span>
+                  <span className="text-xs font-semibold text-neutral-100 uppercase tracking-wide text-right w-28">成本</span>
+                  <span className="text-xs font-semibold text-neutral-100 uppercase tracking-wide text-right min-w-[120px]">現值 (TWD)</span>
+                  <span className="text-xs font-semibold text-neutral-100 uppercase tracking-wide text-right w-24">損益率</span>
                 </div>
               </div>
               {/* 資產列表 */}
