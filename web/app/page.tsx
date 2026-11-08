@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import AssetPieChart, { CATEGORY_COLORS } from '@/components/AssetPieChart';
+import { AssetIcon, PlatformBadge } from '@/components/AssetBadges';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
 import { Position, AssetCategory, CATEGORIES, PAYMENT_CATEGORY, categorize, isClosed, positionKey } from '@/lib/ledger';
@@ -659,11 +660,11 @@ export default function Home() {
                     <div className="md:hidden">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
+                          <AssetIcon symbol={asset.symbol} platform={asset.platform} dimmed={!asset.hasTWDPair} />
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                              <PlatformBadge platform={asset.platform} />
                               {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
                                 <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                   {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
@@ -700,11 +701,11 @@ export default function Home() {
                     {/* 桌面版佈局 */}
                     <div className="hidden md:flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
+                        <AssetIcon symbol={asset.symbol} platform={asset.platform} dimmed={!asset.hasTWDPair} />
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                              <PlatformBadge platform={asset.platform} />
                             {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
                               <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                 {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
@@ -801,11 +802,11 @@ export default function Home() {
             {paymentAssets.map(asset => (
               <div key={asset.key} className="px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
+                  <AssetIcon symbol={asset.symbol} platform={asset.platform} dimmed={!asset.hasTWDPair} />
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                      <PlatformBadge platform={asset.platform} />
                     </div>
                     <p className="text-xs text-neutral-400 tabular-nums">
                       {formatAmount(asset.quantity, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
@@ -839,7 +840,7 @@ export default function Home() {
                 <div key={asset.key} className="px-6 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                    <PlatformBadge platform={asset.platform} />
                   </div>
                   <p className={`text-sm font-semibold tabular-nums ${asset.realized >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                     {asset.realized >= 0 ? '+' : ''}NT$ {formatAmount(asset.realized, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
