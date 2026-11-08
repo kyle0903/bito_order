@@ -141,10 +141,15 @@ export default function LedgerPage() {
     if (!isGrouped(type)) {
       const target = form.target.trim().toUpperCase();
       const quantity = parseFloat(form.quantity);
-      const amount = type === '利息' ? 0 : parseFloat(form.amount);
+      const noAmount = type === '利息' || type === '調整';
+      const amount = noAmount ? 0 : parseFloat(form.amount);
       if (!target) return '請輸入代號';
+      if (type === '調整') {
+        if (!quantity) return '調整數量不可為 0（減少請輸入負數）';
+        return [{ type, date, platform: form.platform, target, quantity, amount: 0 }];
+      }
       if (!(quantity > 0)) return '數量須大於 0';
-      if (type !== '利息' && !(amount > 0)) return '金額須大於 0';
+      if (!noAmount && !(amount > 0)) return '金額須大於 0';
       const sign = type === '賣出' ? -1 : 1;
       return [{ type, date, platform: form.platform, target, quantity: sign * quantity, amount: sign * amount }];
     }
@@ -222,7 +227,7 @@ export default function LedgerPage() {
         ...base,
         platform: first.platform,
         target: first.target,
-        quantity: String(Math.abs(first.quantity)),
+        quantity: String(first.type === '調整' ? first.quantity : Math.abs(first.quantity)),
         amount: String(Math.abs(first.amount)),
       });
     }
@@ -306,14 +311,14 @@ export default function LedgerPage() {
                 onChange={e => updateForm({ target: e.target.value })}
               />
               <Input
-                label="數量"
+                label={form.type === '調整' ? '調整數量（減少輸入負數，成本不變）' : '數量'}
                 type="number"
-                min={0}
+                min={form.type === '調整' ? undefined : 0}
                 step="any"
                 value={form.quantity}
                 onChange={e => updateForm({ quantity: e.target.value })}
               />
-              {form.type !== '利息' && (
+              {form.type !== '利息' && form.type !== '調整' && (
                 <Input
                   label={form.type === '賣出' ? '實收金額 (TWD，扣除手續費)' : '金額 (TWD，含手續費)'}
                   type="number"

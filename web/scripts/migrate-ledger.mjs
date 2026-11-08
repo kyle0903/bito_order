@@ -28,7 +28,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const NEW_PROPERTIES = {
   Platform: { select: { options: [{ name: 'BitoPro' }, { name: 'Bitfinex' }, { name: 'Ether.fi' }, { name: '券商' }] } },
-  Type: { select: { options: ['買入', '賣出', '利息', '轉帳', '兌換'].map((name) => ({ name })) } },
+  Type: { select: { options: ['買入', '賣出', '利息', '轉帳', '兌換', '調整'].map((name) => ({ name })) } },
   GroupId: { rich_text: {} },
   OrderId: { rich_text: {} },
 };

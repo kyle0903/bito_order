@@ -3,13 +3,13 @@
  *
  * Notion 每一筆紀錄 = 一個 LedgerEntry
  * - Quantity：數量（增加為正、減少為負）
- * - Amount：TWD 現金流（買入為正、含手續費；賣出為負、為扣除手續費後的實收；利息/轉帳/兌換為 0）
+ * - Amount：TWD 現金流（買入為正、含手續費；賣出為負、為扣除手續費後的實收；利息/轉帳/兌換/調整為 0）
  */
 
 export const PLATFORMS = ['BitoPro', 'Bitfinex', 'Ether.fi', '券商'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
-export const ENTRY_TYPES = ['買入', '賣出', '利息', '轉帳', '兌換'] as const;
+export const ENTRY_TYPES = ['買入', '賣出', '利息', '轉帳', '兌換', '調整'] as const;
 export type EntryType = (typeof ENTRY_TYPES)[number];
 
 /** 需要兩筆（轉出 + 轉入）共用 GroupId 的類型 */
@@ -138,7 +138,11 @@ export function computePositions(entries: LedgerEntry[]): Position[] {
     }
 
     const pos = getPosition(entry.target, entry.platform);
-    if (entry.quantity >= 0) {
+    if (entry.type === '調整') {
+      // 調整：修正數量（如提領、Gas 損耗），成本不變；若因此結清，剩餘成本計入已實現損益
+      pos.quantity += entry.quantity;
+      if (isClosed(pos.quantity)) pos.realized -= pos.cost;
+    } else if (entry.quantity >= 0) {
       // 買入 / 利息（利息 amount 為 0，成本不變）
       pos.quantity += entry.quantity;
       pos.cost += entry.amount;
