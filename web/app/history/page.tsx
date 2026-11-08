@@ -8,6 +8,7 @@ import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import { LedgerEntryInput } from '@/lib/ledger';
 
 interface Order {
   id: string;
@@ -19,6 +20,8 @@ interface Order {
   executedAmount: string;
   avgExecutionPrice: string;
   total: string;
+  fee?: string;
+  feeSymbol?: string;
   status: number;
   createdTimestamp: number;
   updatedTimestamp: number;
@@ -58,6 +61,25 @@ export default function HistoryPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addResult, setAddResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [exportedOrderIds, setExportedOrderIds] = useState<Set<string>>(new Set());
+
+  // 讀取已匯出到 Notion 的訂單編號
+  const fetchExportedOrderIds = useCallback(async () => {
+    if (!notionCredentials) return;
+    try {
+      const response = await fetchWithNotionCredentials('/api/notion/entries', notionCredentials);
+      if (!response.ok) return;
+      const data = await response.json();
+      const ids = (data.data || []).map((e: { orderId?: string }) => e.orderId).filter(Boolean);
+      setExportedOrderIds(new Set(ids));
+    } catch {
+      // 讀取失敗時不標示
+    }
+  }, [notionCredentials]);
+
+  useEffect(() => {
+    fetchExportedOrderIds();
+  }, [fetchExportedOrderIds]);
 
   const fetchOrders = useCallback(async () => {
     if (!isConfigured) {
@@ -129,13 +151,17 @@ export default function HistoryPage() {
     });
   };
 
+  // 目前篩選條件下、尚未匯出的訂單
+  const getSelectableOrders = () => orders.filter((order) => {
+    if (exportedOrderIds.has(order.id)) return false;
+    if (selectedStatus === 'all') return true;
+    const orderStatus = statusMap[order.status] || 'unknown';
+    return orderStatus === selectedStatus;
+  });
+
   // 全選/取消全選
   const handleSelectAll = () => {
-    const filteredOrders = orders.filter((order) => {
-      if (selectedStatus === 'all') return true;
-      const orderStatus = statusMap[order.status] || 'unknown';
-      return orderStatus === selectedStatus;
-    });
+    const filteredOrders = getSelectableOrders();
 
     if (selectedOrders.size === filteredOrders.length) {
       setSelectedOrders(new Set());
@@ -155,25 +181,37 @@ export default function HistoryPage() {
       // 將選取的訂單轉換為 Notion 格式
       const ordersToAdd = orders
         .filter(o => selectedOrders.has(o.id))
-        .map(order => {
+        .map((order): LedgerEntryInput => {
           const pair = order.pair.split('_')[0].toUpperCase(); // 取得幣種 (如 BTC)
           const date = new Date(order.createdTimestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-          const quantity = parseFloat(order.executedAmount) || parseFloat(order.originalAmount);
-          const total = parseFloat(order.total) || (parseFloat(order.price) * quantity);
+          let quantity = parseFloat(order.executedAmount) || parseFloat(order.originalAmount);
+          let total = parseFloat(order.total) || (parseFloat(order.price) * quantity);
           const isSell = order.action.toLowerCase() === 'sell';
+
+          // 手續費算進成本：幣種計價的手續費減少到手數量，TWD 計價的手續費買入加成本、賣出減實收
+          const fee = parseFloat(order.fee || '') || 0;
+          const feeSymbol = (order.feeSymbol || '').toUpperCase();
+          if (fee > 0 && feeSymbol === pair) {
+            quantity = isSell ? quantity + fee : quantity - fee;
+          } else if (fee > 0 && feeSymbol === 'TWD') {
+            total = isSell ? total - fee : total + fee;
+          }
 
           return {
             target: pair,
             date: date,
             quantity: isSell ? -quantity : quantity, // 賣出為負數
             amount: isSell ? -total : total,          // 賣出為負數
+            platform: 'BitoPro',
+            type: isSell ? '賣出' : '買入',
+            orderId: order.id,
           };
         });
 
-      const response = await fetchWithNotionCredentials('/api/notion/assets/add', notionCredentials, {
+      const response = await fetchWithNotionCredentials('/api/notion/entries', notionCredentials, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orders: ordersToAdd }),
+        body: JSON.stringify({ entries: ordersToAdd }),
       });
 
       const data = await response.json();
@@ -182,6 +220,7 @@ export default function HistoryPage() {
         setAddResult({ success: true, message: data.message });
         setSelectedOrders(new Set()); // 清空選取
         setShowConfirmDialog(false);
+        fetchExportedOrderIds();
       } else {
         setAddResult({ success: false, message: data.error || '新增失敗' });
       }
@@ -310,11 +349,7 @@ export default function HistoryPage() {
                     <th className="px-3 py-3 text-center w-12">
                       <input
                         type="checkbox"
-                        checked={selectedOrders.size > 0 && selectedOrders.size === orders.filter((order) => {
-                          if (selectedStatus === 'all') return true;
-                          const orderStatus = statusMap[order.status] || 'unknown';
-                          return orderStatus === selectedStatus;
-                        }).length}
+                        checked={selectedOrders.size > 0 && selectedOrders.size === getSelectableOrders().length}
                         onChange={handleSelectAll}
                         className="w-4 h-4 text-primary-600 rounded border-neutral-600 bg-neutral-800 focus:ring-primary-500"
                       />
@@ -365,12 +400,16 @@ export default function HistoryPage() {
                           className={`hover:bg-neutral-800/50 transition-colors ${selectedOrders.has(order.id) ? 'bg-primary-900/20' : ''}`}
                         >
                           <td className="px-3 py-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={selectedOrders.has(order.id)}
-                              onChange={() => handleOrderSelect(order.id)}
-                              className="w-4 h-4 text-primary-600 rounded border-neutral-600 bg-neutral-800 focus:ring-primary-500"
-                            />
+                            {exportedOrderIds.has(order.id) ? (
+                              <span className="text-xs text-neutral-500" title="已匯出到 Notion">已匯出</span>
+                            ) : (
+                              <input
+                                type="checkbox"
+                                checked={selectedOrders.has(order.id)}
+                                onChange={() => handleOrderSelect(order.id)}
+                                className="w-4 h-4 text-primary-600 rounded border-neutral-600 bg-neutral-800 focus:ring-primary-500"
+                              />
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400 tabular-nums">
                             {formatTimestamp(order.createdTimestamp)}
