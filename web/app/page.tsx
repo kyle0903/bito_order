@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
-import AssetPieChart from '@/components/AssetPieChart';
+import AssetPieChart, { CATEGORY_COLORS } from '@/components/AssetPieChart';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
-import { Position, Category, CATEGORIES, categorize, isClosed, positionKey } from '@/lib/ledger';
+import { Position, AssetCategory, CATEGORIES, PAYMENT_CATEGORY, categorize, isClosed, positionKey } from '@/lib/ledger';
 import { useAllocationTargets, ALLOCATION_TOLERANCE } from '@/hooks/useAllocationTargets';
 import Link from 'next/link';
 
@@ -16,7 +16,7 @@ interface AssetDisplay {
   symbol: string;
   name: string;
   platform: string;
-  category: Category;
+  category: AssetCategory;
   quantity: number;      // 持有數量
   totalAmount: number;   // 剩餘持倉成本（平均成本法）
   realized: number;      // 已實現損益
@@ -43,6 +43,7 @@ export default function Home() {
   const { targets: allocationTargets } = useAllocationTargets();
   const [assets, setAssets] = useState<AssetDisplay[]>([]);
   const [closedAssets, setClosedAssets] = useState<AssetDisplay[]>([]);
+  const [paymentAssets, setPaymentAssets] = useState<AssetDisplay[]>([]); // 支付用途（不計入總資產）
   const [showClosed, setShowClosed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -238,8 +239,10 @@ export default function Home() {
         return b.valueTWD - a.valueTWD;
       });
 
-      setAssets(assetsWithPrices);
-      setClosedAssets(closed);
+      // 支付用途的資產另外顯示，不計入總資產、損益與配置
+      setAssets(assetsWithPrices.filter(a => a.category !== PAYMENT_CATEGORY));
+      setPaymentAssets(assetsWithPrices.filter(a => a.category === PAYMENT_CATEGORY));
+      setClosedAssets(closed.filter(a => a.category !== PAYMENT_CATEGORY));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.error('Failed to fetch assets:', err);
@@ -536,7 +539,7 @@ export default function Home() {
               </div>
             ) : (
               <AssetPieChart
-                assets={assets}
+                data={allocationRows}
                 showAmounts={showAmounts}
               />
             )}
@@ -570,7 +573,10 @@ export default function Home() {
                     const withinTolerance = Math.abs(row.deviation) <= ALLOCATION_TOLERANCE;
                     return (
                       <tr key={row.category}>
-                        <td className="px-4 py-3 font-medium text-neutral-100">{row.category}</td>
+                        <td className="px-4 py-3 font-medium text-neutral-100">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: CATEGORY_COLORS[row.category] }} />
+                          {row.category}
+                        </td>
                         <td className="px-2 py-3 text-right tabular-nums text-neutral-300">{row.targetPct.toFixed(0)}%</td>
                         <td className="px-2 py-3 text-right tabular-nums text-neutral-100">{row.currentPct.toFixed(1)}%</td>
                         <td className={`px-2 py-3 text-right tabular-nums font-medium ${withinTolerance ? 'text-neutral-400' : 'text-warning-400'}`}>
@@ -653,11 +659,7 @@ export default function Home() {
                     <div className="md:hidden">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}>
-                            <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>
-                              {asset.symbol.substring(0, 2)}
-                            </span>
-                          </div>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
@@ -698,11 +700,7 @@ export default function Home() {
                     {/* 桌面版佈局 */}
                     <div className="hidden md:flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}>
-                          <span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>
-                            {asset.symbol.substring(0, 2)}
-                          </span>
-                        </div>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
@@ -790,6 +788,38 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* 支付用途（如 Ether.fi 卡片），不計入總資產與配置 */}
+      {!loading && paymentAssets.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <h3 className="text-base font-semibold text-neutral-100">
+              支付 <span className="text-sm font-normal text-neutral-400">（不計入總資產與配置）</span>
+            </h3>
+          </CardHeader>
+          <div className="divide-y divide-neutral-800">
+            {paymentAssets.map(asset => (
+              <div key={asset.key} className="px-6 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${asset.hasTWDPair ? 'bg-primary-900/50' : 'bg-neutral-800'}`}><span className={`text-sm font-semibold ${asset.hasTWDPair ? 'text-primary-400' : 'text-neutral-500'}`}>{asset.symbol.substring(0, 2)}</span></div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                    </div>
+                    <p className="text-xs text-neutral-400 tabular-nums">
+                      {formatAmount(asset.quantity, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm font-semibold text-neutral-100 tabular-nums">
+                  {asset.hasTWDPair ? `NT$ ${formatAmount(asset.valueTWD, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '--'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* 已結清部位的已實現損益 */}
       {!loading && closedAssets.length > 0 && (

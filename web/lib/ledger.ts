@@ -15,8 +15,13 @@ export type EntryType = (typeof ENTRY_TYPES)[number];
 /** 需要兩筆（轉出 + 轉入）共用 GroupId 的類型 */
 export const GROUPED_TYPES: EntryType[] = ['轉帳', '兌換'];
 
+/** 投資分類（計入總資產與目標配置） */
 export const CATEGORIES = ['台股', '美股', 'BTC', 'ETH', '放貸', '其他'] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+/** 支付用途（如 Ether.fi 卡片）：不計入總資產與目標配置 */
+export const PAYMENT_CATEGORY = '支付';
+export type AssetCategory = Category | typeof PAYMENT_CATEGORY;
 
 export interface LedgerEntryInput {
   target: string;
@@ -54,8 +59,9 @@ export function isClosed(quantity: number): boolean {
 }
 
 /** 資產分類規則（由上往下比對） */
-export function categorize(target: string, platform: string): Category {
+export function categorize(target: string, platform: string): AssetCategory {
   const symbol = target.toUpperCase();
+  if (platform === 'Ether.fi') return PAYMENT_CATEGORY;
   if (platform === 'Bitfinex') return '放貸';
   if (symbol.endsWith('.TW')) return '台股';
   if (platform === '券商') return '美股';

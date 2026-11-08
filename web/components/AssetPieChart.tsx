@@ -3,40 +3,33 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { PieLabelRenderProps } from 'recharts';
 
-interface AssetData {
-  symbol: string;
-  platform: string;
-  valueTWD: number;
-  hasTWDPair: boolean;
+import { Category } from '@/lib/ledger';
+
+interface CategoryData {
+  category: Category;
+  value: number; // 現值 (TWD)
 }
 
 interface AssetPieChartProps {
-  assets: AssetData[];
+  data: CategoryData[];
   showAmounts: boolean;
 }
 
-// 資產顏色配置
-const COLORS = [
-  '#F59E0B', 
-  '#10B981', 
-  '#6366F1',
-  '#3B82F6', 
-  '#EF4444', 
-  '#8B5CF6', 
-  '#EC4899', 
-  '#06B6D4', 
-  '#84CC16', 
-  '#F97316'
-];
+// 分類顏色（與目標配置表共用）
+export const CATEGORY_COLORS: Record<Category, string> = {
+  BTC: '#F7931A',
+  ETH: '#627EEA',
+  放貸: '#16B157',
+  台股: '#EF4444',
+  美股: '#06B6D4',
+  其他: '#A3A3A3',
+};
 
-export default function AssetPieChart({ assets, showAmounts }: AssetPieChartProps) {
-  // 過濾有價格的資產並準備圖表資料（依現值）
-  const chartData = assets
-    .filter(asset => asset.hasTWDPair && asset.valueTWD > 0)
-    .map(asset => ({
-      name: `${asset.symbol} · ${asset.platform}`,
-      value: asset.valueTWD,
-    }))
+export default function AssetPieChart({ data, showAmounts }: AssetPieChartProps) {
+  // 依分類的現值準備圖表資料
+  const chartData = data
+    .filter(item => item.value > 0)
+    .map(item => ({ name: item.category, value: item.value }))
     .sort((a, b) => b.value - a.value);
 
   // 計算總額
@@ -94,10 +87,10 @@ export default function AssetPieChart({ assets, showAmounts }: AssetPieChartProp
             label={renderLabel}
             labelLine={false}
           >
-            {chartData.map((entry, index) => (
-              <Cell 
-                key={`cell-${entry.name}`} 
-                fill={COLORS[index % COLORS.length]}
+            {chartData.map((entry) => (
+              <Cell
+                key={`cell-${entry.name}`}
+                fill={CATEGORY_COLORS[entry.name]}
               />
             ))}
           </Pie>
