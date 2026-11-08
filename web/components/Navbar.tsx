@@ -10,6 +10,7 @@ const navigation = [
     { name: '市場', href: '/market', icon: '⊞' },
     { name: '交易', href: '/trading', icon: '⇄' },
     { name: '歷史訂單', href: '/history', icon: '⋮' },
+    { name: '記帳', href: '/ledger', icon: '✎' },
     { name: '設定', href: '/settings', icon: '⚙' },
 ];
 
