@@ -64,10 +64,13 @@ export function categorize(target: string, platform: string): Category {
   return '其他';
 }
 
+// Notion 建立時間只精確到分鐘；同日同分鐘時依操作的自然順序排
+const TYPE_ORDER: Record<EntryType, number> = { 買入: 0, 利息: 1, 轉帳: 2, 兌換: 3, 調整: 4, 賣出: 5 };
+
 function compareEntries(a: LedgerEntry, b: LedgerEntry): number {
   if (a.date !== b.date) return a.date < b.date ? -1 : 1;
   if (a.createdTime !== b.createdTime) return a.createdTime < b.createdTime ? -1 : 1;
-  return 0;
+  return TYPE_ORDER[a.type] - TYPE_ORDER[b.type];
 }
 
 /**
