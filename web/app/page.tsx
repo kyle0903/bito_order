@@ -6,21 +6,20 @@ import Card, { CardHeader, CardContent } from '@/components/Card';
 import AssetPieChart from '@/components/AssetPieChart';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
+import { Position, Category, CATEGORIES, categorize, isClosed, positionKey } from '@/lib/ledger';
+import { useAllocationTargets, ALLOCATION_TOLERANCE } from '@/hooks/useAllocationTargets';
 import Link from 'next/link';
-
-// Notion 資料介面
-interface NotionAsset {
-  target: string;
-  totalQuantity: number;
-  totalAmount: number;
-}
 
 // 顯示用資料介面
 interface AssetDisplay {
+  key: string;           // 代號 + 平台
   symbol: string;
   name: string;
-  quantity: number;      // 從 Notion 讀取的總數量
-  totalAmount: number;   // 從 Notion 讀取的總金額
+  platform: string;
+  category: Category;
+  quantity: number;      // 持有數量
+  totalAmount: number;   // 剩餘持倉成本（平均成本法）
+  realized: number;      // 已實現損益
   price: number;         // 從 BitoPro 取得的台幣價格
   priceChange24hr: number;
   valueTWD: number;      // 當前市值 (quantity * price)
@@ -41,14 +40,16 @@ interface FearGreedData {
 
 export default function Home() {
   const { credentials: notionCredentials, isConfigured: isNotionConfigured, isLoading: isNotionLoading } = useNotionCredentials();
+  const { targets: allocationTargets } = useAllocationTargets();
   const [assets, setAssets] = useState<AssetDisplay[]>([]);
+  const [closedAssets, setClosedAssets] = useState<AssetDisplay[]>([]);
+  const [showClosed, setShowClosed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notionNotConfigured, setNotionNotConfigured] = useState(false);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
   const [showAmounts, setShowAmounts] = useState(false);
-  const [chartMode, setChartMode] = useState<'value' | 'cost'>('value');
 
   // 從 localStorage 讀取顯示狀態
   useEffect(() => {
@@ -89,6 +90,21 @@ export default function Home() {
   const fetchTickerData = async (symbol: string): Promise<{ price: number; priceChange24hr: number; hasTWDPair: boolean; quoteCurrency?: string }> => {
     // TWD 本身價值為 1，無變化
     if (symbol === 'TWD') return { price: 1, priceChange24hr: 0, hasTWDPair: true, quoteCurrency: 'TWD' };
+
+    // USD（如 Bitfinex 放貸）以 USD/TWD 匯率計價
+    if (symbol === 'USD') {
+      try {
+        const response = await fetch('/api/finance/fx');
+        if (response.ok) {
+          const data = await response.json();
+          const rate = data.data?.rate || 0;
+          if (rate > 0) return { price: rate, priceChange24hr: 0, hasTWDPair: true, quoteCurrency: 'USD' };
+        }
+      } catch {
+        // 匯率取得失敗
+      }
+      return { price: 0, priceChange24hr: 0, hasTWDPair: false };
+    }
 
     // 1. 先嘗試從 BitoPro 取得加密貨幣價格
     try {
@@ -167,28 +183,53 @@ export default function Home() {
       }
 
       const data = await response.json();
-      const notionAssets: NotionAsset[] = data.data || [];
+      const positions: Position[] = data.data || [];
+      const openPositions = positions.filter(p => !isClosed(p.quantity));
 
-      // 為每個資產獲取價格和24小時變化
-      const assetsWithPrices: AssetDisplay[] = await Promise.all(
-        notionAssets.map(async (asset: NotionAsset) => {
-          const symbol = asset.target.toUpperCase();
-          const { price, priceChange24hr, hasTWDPair, quoteCurrency } = await fetchTickerData(symbol);
-          const valueTWD = hasTWDPair ? asset.totalQuantity * price : 0;
+      // 已結清部位：只列出有已實現損益的（轉帳轉空的部位不列）
+      const closed: AssetDisplay[] = positions
+        .filter(p => isClosed(p.quantity) && Math.abs(p.realized) >= 1)
+        .map(p => ({
+          key: positionKey(p.target, p.platform),
+          symbol: p.target,
+          name: p.target,
+          platform: p.platform,
+          category: categorize(p.target, p.platform),
+          quantity: 0,
+          totalAmount: 0,
+          realized: p.realized,
+          price: 0,
+          priceChange24hr: 0,
+          valueTWD: 0,
+          hasTWDPair: true,
+        }))
+        .sort((a, b) => a.realized - b.realized);
 
-          return {
-            symbol,
-            name: symbol,
-            quantity: asset.totalQuantity,
-            totalAmount: asset.totalAmount,
-            price,
-            priceChange24hr,
-            valueTWD,
-            hasTWDPair,
-            quoteCurrency,
-          };
-        })
+      // 同一代號在多個平台只查一次價格
+      const symbols = Array.from(new Set(openPositions.map(p => p.target.toUpperCase())));
+      const tickers = new Map(
+        await Promise.all(symbols.map(async s => [s, await fetchTickerData(s)] as const))
       );
+
+      const assetsWithPrices: AssetDisplay[] = openPositions.map(p => {
+        const symbol = p.target.toUpperCase();
+        const { price, priceChange24hr, hasTWDPair, quoteCurrency } = tickers.get(symbol)!;
+        return {
+          key: positionKey(symbol, p.platform),
+          symbol,
+          name: symbol,
+          platform: p.platform,
+          category: categorize(symbol, p.platform),
+          quantity: p.quantity,
+          totalAmount: p.cost,
+          realized: p.realized,
+          price,
+          priceChange24hr,
+          valueTWD: hasTWDPair ? p.quantity * price : 0,
+          hasTWDPair,
+          quoteCurrency,
+        };
+      });
 
       // 按市值排序，有價格的在前面
       assetsWithPrices.sort((a, b) => {
@@ -198,6 +239,7 @@ export default function Home() {
       });
 
       setAssets(assetsWithPrices);
+      setClosedAssets(closed);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.error('Failed to fetch assets:', err);
@@ -260,11 +302,31 @@ export default function Home() {
     .filter(asset => asset.hasTWDPair)
     .reduce((sum, asset) => sum + asset.totalAmount, 0);
 
-  // 計算總損益和損益率
+  // 計算未實現損益（目前持有）和損益率
   const totalProfitLoss = totalValueTWD - totalCost;
   const totalProfitLossRate = totalCost > 0
     ? ((totalValueTWD - totalCost) / totalCost) * 100
     : 0;
+
+  // 已實現損益（含已結清部位與持有中部位的部分賣出）
+  const totalRealized = [...assets, ...closedAssets].reduce((sum, asset) => sum + asset.realized, 0);
+
+  // 目標配置 vs 目前配置
+  const allocationRows = CATEGORIES.map(category => {
+    const value = assets
+      .filter(asset => asset.hasTWDPair && asset.category === category)
+      .reduce((sum, asset) => sum + asset.valueTWD, 0);
+    const currentPct = totalValueTWD > 0 ? (value / totalValueTWD) * 100 : 0;
+    const targetPct = allocationTargets[category] || 0;
+    return {
+      category,
+      value,
+      currentPct,
+      targetPct,
+      deviation: currentPct - targetPct,
+      rebalanceTWD: (targetPct / 100) * totalValueTWD - value, // 正數＝需買入，負數＝需賣出
+    };
+  }).filter(row => row.value > 0 || row.targetPct > 0);
 
   // 計算總資產價值 (USD)
   const totalValueUSD = exchangeRates?.USD && exchangeRates.USD > 0
@@ -372,7 +434,7 @@ export default function Home() {
         <Card>
           <CardContent className="py-5">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-neutral-400">總損益</p>
+              <p className="text-sm font-medium text-neutral-400">未實現損益</p>
               {!loading && (
                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${totalProfitLossRate >= 0
                   ? 'bg-success-900/30 text-success-400'
@@ -393,7 +455,13 @@ export default function Home() {
                   })}
                 </p>
                 <p className="text-xs text-neutral-400 mt-1">
-                  總成本: NT$ {formatAmount(totalCost, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  持倉成本: NT$ {formatAmount(totalCost, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  已實現損益:{' '}
+                  <span className={`tabular-nums ${totalRealized >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                    {totalRealized >= 0 ? '+' : ''}NT$ {formatAmount(totalRealized, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
                 </p>
               </>
             )}
@@ -455,45 +523,80 @@ export default function Home() {
         </Card>
       </div>
 
-      {/* 資產配置圓餅圖 */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <h3 className="text-base font-semibold text-neutral-100">資產配置</h3>
-          <div className="flex items-center gap-1 bg-neutral-800 rounded-lg p-1">
-            <button
-              onClick={() => setChartMode('value')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'value'
-                ? 'bg-neutral-700 text-neutral-100 shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-            >
-              現值比例
-            </button>
-            <button
-              onClick={() => setChartMode('cost')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'cost'
-                ? 'bg-neutral-700 text-neutral-100 shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-            >
-              成本比例
-            </button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-sm text-neutral-400">載入中...</p>
-            </div>
-          ) : (
-            <AssetPieChart
-              assets={assets}
-              mode={chartMode}
-              showAmounts={showAmounts}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* 資產配置圓餅圖（現值） */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-base font-semibold text-neutral-100">資產配置</h3>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-sm text-neutral-400">載入中...</p>
+              </div>
+            ) : (
+              <AssetPieChart
+                assets={assets}
+                showAmounts={showAmounts}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 目標配置 vs 目前配置 */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <h3 className="text-base font-semibold text-neutral-100">目標配置</h3>
+            <Link href="/settings" className="text-sm text-primary-400 hover:text-primary-300">調整目標</Link>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-sm text-neutral-400">載入中...</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-neutral-800">
+                  <tr className="text-xs font-semibold text-neutral-100">
+                    <th className="px-4 py-2 text-left">分類</th>
+                    <th className="px-2 py-2 text-right">目標</th>
+                    <th className="px-2 py-2 text-right">目前</th>
+                    <th className="px-2 py-2 text-right">偏離</th>
+                    <th className="px-4 py-2 text-right">調整至目標</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-800">
+                  {allocationRows.map(row => {
+                    const withinTolerance = Math.abs(row.deviation) <= ALLOCATION_TOLERANCE;
+                    return (
+                      <tr key={row.category}>
+                        <td className="px-4 py-3 font-medium text-neutral-100">{row.category}</td>
+                        <td className="px-2 py-3 text-right tabular-nums text-neutral-300">{row.targetPct.toFixed(0)}%</td>
+                        <td className="px-2 py-3 text-right tabular-nums text-neutral-100">{row.currentPct.toFixed(1)}%</td>
+                        <td className={`px-2 py-3 text-right tabular-nums font-medium ${withinTolerance ? 'text-neutral-400' : 'text-warning-400'}`}>
+                          {row.deviation >= 0 ? '+' : ''}{row.deviation.toFixed(1)}%
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {withinTolerance ? (
+                            <span className="text-neutral-500">正常</span>
+                          ) : (
+                            <span className={row.rebalanceTWD > 0 ? 'text-success-400' : 'text-danger-400'}>
+                              {row.rebalanceTWD > 0 ? '買入' : '賣出'} NT$ {formatAmount(Math.abs(row.rebalanceTWD), { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            <p className="px-4 py-2 text-xs text-neutral-500 border-t border-neutral-800">
+              * 偏離 ±{ALLOCATION_TOLERANCE}% 以內視為正常
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 資產列表 */}
       <Card>
@@ -543,7 +646,7 @@ export default function Home() {
               <div className="divide-y divide-neutral-800">
                 {assets.map((asset) => (
                   <div
-                    key={asset.symbol}
+                    key={asset.key}
                     className="px-4 md:px-6 py-4 hover:bg-neutral-800/50 transition-colors"
                   >
                     {/* 手機版佈局 */}
@@ -558,6 +661,7 @@ export default function Home() {
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
                               {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
                                 <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                   {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
@@ -602,6 +706,7 @@ export default function Home() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
                             {asset.hasTWDPair && asset.priceChange24hr !== 0 && (
                               <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${asset.priceChange24hr > 0 ? 'bg-success-900/30 text-success-400' : 'bg-danger-900/30 text-danger-400'}`}>
                                 {asset.priceChange24hr > 0 ? '+' : ''}{asset.priceChange24hr.toFixed(2)}%
@@ -685,6 +790,36 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* 已結清部位的已實現損益 */}
+      {!loading && closedAssets.length > 0 && (
+        <Card className="mt-6">
+          <button
+            onClick={() => setShowClosed(prev => !prev)}
+            className="w-full px-6 py-4 flex items-center justify-between text-left"
+          >
+            <h3 className="text-base font-semibold text-neutral-100">
+              已結清部位 <span className="text-sm font-normal text-neutral-400">（{closedAssets.length}）</span>
+            </h3>
+            <span className="text-sm text-neutral-400">{showClosed ? '收合 ▲' : '展開 ▼'}</span>
+          </button>
+          {showClosed && (
+            <div className="divide-y divide-neutral-800 border-t border-neutral-800">
+              {closedAssets.map(asset => (
+                <div key={asset.key} className="px-6 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-neutral-100">{asset.symbol}</p>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{asset.platform}</span>
+                  </div>
+                  <p className={`text-sm font-semibold tabular-nums ${asset.realized >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                    {asset.realized >= 0 ? '+' : ''}NT$ {formatAmount(asset.realized, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </DashboardLayout>
   );
 }

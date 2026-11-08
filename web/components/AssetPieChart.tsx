@@ -5,14 +5,13 @@ import { PieLabelRenderProps } from 'recharts';
 
 interface AssetData {
   symbol: string;
+  platform: string;
   valueTWD: number;
-  totalAmount: number;
   hasTWDPair: boolean;
 }
 
 interface AssetPieChartProps {
   assets: AssetData[];
-  mode: 'value' | 'cost';
   showAmounts: boolean;
 }
 
@@ -30,13 +29,13 @@ const COLORS = [
   '#F97316'
 ];
 
-export default function AssetPieChart({ assets, mode, showAmounts }: AssetPieChartProps) {
-  // 過濾有價格的資產並準備圖表資料
+export default function AssetPieChart({ assets, showAmounts }: AssetPieChartProps) {
+  // 過濾有價格的資產並準備圖表資料（依現值）
   const chartData = assets
-    .filter(asset => asset.hasTWDPair && (mode === 'value' ? asset.valueTWD > 0 : asset.totalAmount > 0))
+    .filter(asset => asset.hasTWDPair && asset.valueTWD > 0)
     .map(asset => ({
-      name: asset.symbol,
-      value: mode === 'value' ? asset.valueTWD : asset.totalAmount,
+      name: `${asset.symbol} · ${asset.platform}`,
+      value: asset.valueTWD,
     }))
     .sort((a, b) => b.value - a.value);
 

@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import AllocationTargetsCard from '@/components/AllocationTargetsCard';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
@@ -460,6 +461,8 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          <AllocationTargetsCard />
 
           {/* 關於 */}
           <Card>
