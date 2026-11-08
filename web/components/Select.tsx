@@ -27,13 +27,13 @@ export default function Select({
       )}
       <select
         className={`
-          w-full px-3 py-2 bg-neutral-800 border rounded-md text-sm text-neutral-100
+          w-full px-3.5 py-2.5 bg-neutral-800 border rounded-xl text-sm text-neutral-100
           transition-colors duration-150
           focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-offset-neutral-900
           disabled:bg-neutral-900 disabled:text-neutral-500 disabled:cursor-not-allowed
           ${error
-            ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
-            : 'border-neutral-700 focus:border-primary-500 focus:ring-primary-500/20'
+            ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/30'
+            : 'border-transparent focus:border-primary-500 focus:ring-primary-500/30'
           }
           ${className}
         `}

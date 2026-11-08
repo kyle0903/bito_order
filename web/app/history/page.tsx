@@ -467,7 +467,7 @@ export default function HistoryPage() {
       {/* 確認對話框 */}
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-neutral-900 rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden border border-neutral-800">
+          <div className="bg-neutral-900 rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             <div className="px-6 py-4 border-b border-neutral-800">
               <h3 className="text-lg font-semibold text-neutral-100">確認新增紀錄</h3>
             </div>
@@ -517,7 +517,7 @@ export default function HistoryPage() {
       {/* 結果提示 */}
       {addResult && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className={`px-6 py-3 rounded-lg shadow-lg ${addResult.success ? 'bg-success-600' : 'bg-danger-600'
+          <div className={`px-6 py-3 rounded-2xl shadow-lg ${addResult.success ? 'bg-success-600' : 'bg-danger-600'
             } text-white flex items-center gap-3`}>
             <span className="text-sm font-medium">{addResult.message}</span>
             <button

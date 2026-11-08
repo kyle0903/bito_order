@@ -256,7 +256,7 @@ export default function TradingPage() {
 
                 {/* 當前價格 */}
                 {pair && (
-                  <div className="p-4 bg-neutral-800 rounded-md">
+                  <div className="p-4 bg-neutral-800 rounded-2xl">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-medium text-neutral-400">目前價格</p>
@@ -299,10 +299,10 @@ export default function TradingPage() {
                         type="button"
                         onClick={() => setOrderType(type.value)}
                         className={`
-                          flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors
+                          flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors
                           ${orderType === type.value
                             ? 'bg-primary-600 text-white'
-                            : 'bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700'
+                            : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
                           }
                         `}
                       >
@@ -380,7 +380,7 @@ export default function TradingPage() {
 
                 {/* 結果提示 */}
                 {orderResult && (
-                  <div className={`p-4 rounded-lg ${orderResult.success ? 'bg-success-900/30 text-success-300' : 'bg-danger-900/30 text-danger-300'}`}>
+                  <div className={`p-4 rounded-2xl ${orderResult.success ? 'bg-success-900/30 text-success-300' : 'bg-danger-900/30 text-danger-300'}`}>
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">{orderResult.message}</p>
                       <button
@@ -462,7 +462,7 @@ export default function TradingPage() {
                 openOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3 bg-neutral-800 rounded-lg space-y-2"
+                    className="p-3 bg-neutral-800 rounded-2xl space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

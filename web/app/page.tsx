@@ -366,7 +366,7 @@ export default function Home() {
     <DashboardLayout title="資產總覽">
       {/* Notion 未設定警告 */}
       {notionNotConfigured && (
-        <div className="mb-6 p-4 rounded-lg bg-warning-900/30 border border-warning-700/50">
+        <div className="mb-6 p-4 rounded-2xl bg-warning-900/30 border border-warning-700/50">
           <div className="flex items-center gap-3">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-warning-400 flex-shrink-0">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -377,7 +377,7 @@ export default function Home() {
             </div>
             <Link
               href="/settings"
-              className="px-3 py-1.5 text-sm font-medium text-warning-300 bg-warning-900/50 hover:bg-warning-900 rounded-md transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-warning-300 bg-warning-900/50 hover:bg-warning-900 rounded-full transition-colors"
             >
               前往設定
             </Link>

@@ -6,7 +6,7 @@ export default function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-neutral-900 rounded-lg border border-neutral-800 ${className}`}>
+    <div className={`bg-neutral-900 rounded-3xl overflow-hidden ${className}`}>
       {children}
     </div>
   );
@@ -20,7 +20,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={`px-6 py-4 border-b border-neutral-800 ${className}`}>
+    <div className={`px-6 py-5 border-b border-white/[0.06] ${className}`}>
       {children}
     </div>
   );

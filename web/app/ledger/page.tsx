@@ -331,7 +331,7 @@ export default function LedgerPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3 p-3 rounded-lg bg-neutral-800/40">
+              <div className="space-y-3 p-3 rounded-2xl bg-neutral-800/40">
                 <p className="text-xs font-semibold text-danger-400">轉出</p>
                 <Select
                   label="平台"
@@ -353,7 +353,7 @@ export default function LedgerPage() {
                   })}
                 />
               </div>
-              <div className="space-y-3 p-3 rounded-lg bg-neutral-800/40">
+              <div className="space-y-3 p-3 rounded-2xl bg-neutral-800/40">
                 <p className="text-xs font-semibold text-success-400">轉入</p>
                 {form.type === '轉帳' ? (
                   <Select

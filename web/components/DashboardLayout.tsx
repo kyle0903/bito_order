@@ -11,10 +11,10 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex flex-col h-screen bg-neutral-950">
+    <div className="min-h-screen bg-neutral-950">
       <Navbar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[1600px] mx-auto p-4 md:p-6">
+      <main>
+        <div className="max-w-[1400px] mx-auto px-4 py-6 md:px-8 md:py-10">
           {children}
         </div>
       </main>

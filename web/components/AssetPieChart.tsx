@@ -42,15 +42,15 @@ export default function AssetPieChart({ data, showAmounts }: AssetPieChartProps)
       const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : '0';
       
       return (
-        <div className="bg-white px-3 py-2 rounded-lg shadow-lg border border-neutral-200">
-          <p className="text-sm font-semibold text-neutral-900">{data.name}</p>
-          <p className="text-xs text-neutral-600">
+        <div className="bg-neutral-800 px-3 py-2 rounded-xl shadow-lg">
+          <p className="text-sm font-semibold text-neutral-100">{data.name}</p>
+          <p className="text-xs text-neutral-300">
             {showAmounts 
               ? `NT$ ${data.value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
               : '******'
             }
           </p>
-          <p className="text-xs text-neutral-500">{percentage}%</p>
+          <p className="text-xs text-neutral-400">{percentage}%</p>
         </div>
       );
     }
@@ -91,12 +91,13 @@ export default function AssetPieChart({ data, showAmounts }: AssetPieChartProps)
               <Cell
                 key={`cell-${entry.name}`}
                 fill={CATEGORY_COLORS[entry.name]}
+                stroke="#1c1c1e"
               />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} isAnimationActive={false} cursor={false} />
           <Legend 
-            formatter={(value) => <span className="text-xs text-neutral-600">{value}</span>}
+            formatter={(value) => <span className="text-xs text-neutral-400">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>
