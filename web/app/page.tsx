@@ -46,6 +46,7 @@ export default function Home() {
   const [closedAssets, setClosedAssets] = useState<AssetDisplay[]>([]);
   const [paymentAssets, setPaymentAssets] = useState<AssetDisplay[]>([]); // 支付用途（不計入總資產）
   const [showClosed, setShowClosed] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notionNotConfigured, setNotionNotConfigured] = useState(false);
@@ -793,12 +794,17 @@ export default function Home() {
       {/* 支付用途（如 Ether.fi 卡片），不計入總資產與配置 */}
       {!loading && paymentAssets.length > 0 && (
         <Card className="mt-6">
-          <CardHeader>
+          <button
+            onClick={() => setShowPayment(prev => !prev)}
+            className="w-full px-6 py-4 flex items-center justify-between text-left"
+          >
             <h3 className="text-base font-semibold text-neutral-100">
               支付 <span className="text-sm font-normal text-neutral-400">（不計入總資產與配置）</span>
             </h3>
-          </CardHeader>
-          <div className="divide-y divide-neutral-800">
+            <span className="text-sm text-neutral-400">{showPayment ? '收合 ▲' : '展開 ▼'}</span>
+          </button>
+          {showPayment && (
+          <div className="divide-y divide-neutral-800 border-t border-neutral-800">
             {paymentAssets.map(asset => (
               <div key={asset.key} className="px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -819,6 +825,7 @@ export default function Home() {
               </div>
             ))}
           </div>
+          )}
         </Card>
       )}
 
