@@ -1,97 +1,21 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { Client } from '@notionhq/client';
+import { computePositions } from '@/lib/ledger';
+import { getNotionFromRequest, queryAllEntries } from '@/lib/notionLedger';
 
 // 強制動態渲染
 export const dynamic = 'force-dynamic';
 
-interface AssetSummary {
-  target: string;
-  totalQuantity: number;
-  totalAmount: number;
-}
-
-// 從 Notion page 中提取屬性值
-function getPropertyValue(property: any): string | number | null {
-  if (!property) return null;
-
-  switch (property.type) {
-    case 'title':
-      return property.title?.[0]?.plain_text || '';
-    case 'rich_text':
-      return property.rich_text?.[0]?.plain_text || '';
-    case 'number':
-      return property.number;
-    case 'select':
-      return property.select?.name || '';
-    case 'date':
-      return property.date?.start || '';
-    default:
-      return null;
-  }
-}
-
+// 回傳每個「代號 + 平台」的持倉（平均成本法），含已結清部位的已實現損益
 export async function GET(request: NextRequest) {
   try {
-    // 從 headers 讀取憑證
-    const apiToken = request.headers.get('X-Notion-Token');
-    const databaseId = request.headers.get('X-Notion-Database-Id');
+    const ctx = getNotionFromRequest(request);
+    if ('error' in ctx) return ctx.error;
 
-    if (!apiToken) {
-      return NextResponse.json(
-        { error: 'Notion API Token 未設定', notConfigured: true },
-        { status: 401 }
-      );
-    }
-
-    if (!databaseId) {
-      return NextResponse.json(
-        { error: 'Notion Database ID 未設定', notConfigured: true },
-        { status: 401 }
-      );
-    }
-
-    // 動態建立 Notion 客戶端
-    const notion = new Client({
-      auth: apiToken,
-    });
-
-    // 查詢 Notion Database 中的所有資料
-    const response = await notion.databases.query({
-      database_id: databaseId,
-    });
-
-    // 彙總資料：按 Target 分組
-    const summaryMap = new Map<string, AssetSummary>();
-
-    for (const page of response.results) {
-      if (!('properties' in page)) continue;
-
-      const properties = page.properties;
-      const target = getPropertyValue(properties.Target) as string;
-      const quantity = getPropertyValue(properties.Quantity) as number || 0;
-      const amount = getPropertyValue(properties.Amount) as number || 0;
-
-      if (!target) continue;
-
-      if (summaryMap.has(target)) {
-        const existing = summaryMap.get(target)!;
-        existing.totalQuantity += quantity;
-        existing.totalAmount += amount;
-      } else {
-        summaryMap.set(target, {
-          target,
-          totalQuantity: quantity,
-          totalAmount: amount,
-        });
-      }
-    }
-
-    // 轉換為陣列
-    const assets: AssetSummary[] = Array.from(summaryMap.values());
+    const entries = await queryAllEntries(ctx.notion, ctx.databaseId);
 
     return NextResponse.json({
       success: true,
-      data: assets,
+      data: computePositions(entries),
     });
   } catch (error) {
     console.error('Failed to fetch Notion assets:', error);
@@ -104,4 +28,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
