@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 
 interface Ticker {
@@ -14,7 +13,7 @@ interface Ticker {
   low24hr: string;
 }
 
-export default function MarketPage() {
+export default function MarketPanel() {
   const [tickers, setTickers] = useState<Ticker[]>([]);
   const [displayOrder, setDisplayOrder] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -262,7 +261,7 @@ export default function MarketPage() {
   };
 
   return (
-    <DashboardLayout title="市場">
+    <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -475,6 +474,6 @@ export default function MarketPage() {
           )}
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 }

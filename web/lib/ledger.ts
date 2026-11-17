@@ -3,13 +3,13 @@
  *
  * Notion 每一筆紀錄 = 一個 LedgerEntry
  * - Quantity：數量（增加為正、減少為負）
- * - Amount：TWD 現金流（買入為正、含手續費；賣出為負、為扣除手續費後的實收；利息/轉帳/兌換/調整為 0）
+ * - Amount：TWD 現金流（買入為正、含手續費；賣出、股利為負、為實收金額；利息/轉帳/兌換/調整為 0）
  */
 
 export const PLATFORMS = ['BitoPro', 'Bitfinex', 'Ether.fi', '券商'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
-export const ENTRY_TYPES = ['買入', '賣出', '利息', '轉帳', '兌換', '調整'] as const;
+export const ENTRY_TYPES = ['買入', '賣出', '利息', '股利', '轉帳', '兌換', '調整'] as const;
 export type EntryType = (typeof ENTRY_TYPES)[number];
 
 /** 需要兩筆（轉出 + 轉入）共用 GroupId 的類型 */
@@ -71,7 +71,7 @@ export function categorize(target: string, platform: string): AssetCategory {
 }
 
 // Notion 建立時間只精確到分鐘；同日同分鐘時依操作的自然順序排
-const TYPE_ORDER: Record<EntryType, number> = { 買入: 0, 利息: 1, 轉帳: 2, 兌換: 3, 調整: 4, 賣出: 5 };
+const TYPE_ORDER: Record<EntryType, number> = { 買入: 0, 利息: 1, 股利: 2, 轉帳: 3, 兌換: 4, 調整: 5, 賣出: 6 };
 
 function compareEntries(a: LedgerEntry, b: LedgerEntry): number {
   if (a.date !== b.date) return a.date < b.date ? -1 : 1;
@@ -83,6 +83,7 @@ function compareEntries(a: LedgerEntry, b: LedgerEntry): number {
  * 依時間順序逐筆計算每個「代號 + 平台」的持倉與已實現損益（平均成本法）
  * - 賣出：按平均成本扣成本，差額計入已實現損益
  * - 利息：數量增加，成本不變
+ * - 股利：現金股利，數量與成本不變，實收金額計入已實現損益
  * - 轉帳/兌換：轉出端依平均成本移出成本，轉入端承接該成本，不產生損益
  */
 export function computePositions(entries: LedgerEntry[]): Position[] {
@@ -151,6 +152,9 @@ export function computePositions(entries: LedgerEntry[]): Position[] {
       // 調整：修正數量（如提領、Gas 損耗），成本不變；若因此結清，剩餘成本計入已實現損益
       pos.quantity += entry.quantity;
       if (isClosed(pos.quantity)) pos.realized -= pos.cost;
+    } else if (entry.type === '股利') {
+      // 股利：-amount 為實收金額
+      pos.realized += -entry.amount;
     } else if (entry.quantity >= 0) {
       // 買入 / 利息（利息 amount 為 0，成本不變）
       pos.quantity += entry.quantity;

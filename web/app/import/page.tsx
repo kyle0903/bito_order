@@ -45,7 +45,7 @@ const availablePairs = [
   { value: 'usdc_twd', label: 'USDC/TWD' },
 ];
 
-export default function HistoryPage() {
+export default function ImportPage() {
   const { credentials, isConfigured } = useCredentials();
   const { credentials: notionCredentials } = useNotionCredentials();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -232,7 +232,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <DashboardLayout title="訂單紀錄">
+    <DashboardLayout title="匯入">
       {/* 過濾器 */}
       <Card className="mb-6">
         <CardContent className="py-4">
