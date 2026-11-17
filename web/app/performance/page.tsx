@@ -108,12 +108,15 @@ export default function PerformancePage() {
                   <th className="px-4 py-3 text-right">現值</th>
                   <th className="px-4 py-3 text-right">淨投入</th>
                   <th className="px-4 py-3 text-right">損益</th>
+                  <th className="px-4 py-3 text-right">總報酬率</th>
                   <th className="px-4 py-3 text-right">年化 (XIRR)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800">
                 {(data?.categories || []).map(row => {
                   const rowProfit = row.value - row.invested;
+                  const totalReturn = row.contributed > 0 ? rowProfit / row.contributed : null;
+                  const closed = row.value < 1; // 已結清：年化數字被短期放大，改看總報酬率
                   return (
                     <tr key={row.category}>
                       <td className="px-4 py-3 font-medium text-neutral-100 whitespace-nowrap">
@@ -123,9 +126,16 @@ export default function PerformancePage() {
                       <td className="px-4 py-3 text-right tabular-nums text-neutral-100">{money(row.value)}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-neutral-300">{money(row.invested)}</td>
                       <td className={`px-4 py-3 text-right tabular-nums ${pnlColor(rowProfit)}`}>{money(rowProfit, true)}</td>
+                      <td className={`px-4 py-3 text-right tabular-nums ${pnlColor(totalReturn)}`}>{formatPercent(totalReturn)}</td>
                       <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">
-                        <span className={pnlColor(row.xirr)}>{formatPercent(row.xirr)}</span>
-                        {isUnderOneYear(row.since) && <span className="ml-1 text-xs text-neutral-500">未滿一年</span>}
+                        {closed ? (
+                          <span className="text-neutral-500">已結清</span>
+                        ) : (
+                          <>
+                            <span className={pnlColor(row.xirr)}>{formatPercent(row.xirr)}</span>
+                            {isUnderOneYear(row.since) && <span className="ml-1 text-xs text-neutral-500">未滿一年</span>}
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
@@ -136,6 +146,7 @@ export default function PerformancePage() {
           <div className="px-4 py-3 text-xs text-neutral-500 border-t border-neutral-800 space-y-1">
             <p>* 依帳本與每日收盤價（Yahoo Finance）重建，與總覽頁的即時價格可能略有差異；不含支付分類（轉去 Ether.fi 視為提領）</p>
             <p>* 跨分類的轉帳 / 兌換以當日市值計為來源分類的取回、目的分類的投入</p>
+            <p>* 總報酬率 = 損益 ÷ 總投入（所有買入與轉入金額，不扣除賣出）；已結清的分類不顯示年化</p>
             {data && data.missingPrices.length > 0 && (
               <p className="text-warning-400">* 部分期間查無歷史價格，該期間以 0 計價：{data.missingPrices.join('、')}</p>
             )}

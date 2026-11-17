@@ -28,6 +28,7 @@ export interface CategoryPerformance {
   category: Category;
   value: number;
   invested: number;
+  contributed: number; // 總投入：所有投入現金流加總（不扣除取回），作為總報酬率的分母
   xirr: number | null;
   since: string; // 第一筆現金流日期
 }
@@ -170,6 +171,7 @@ export function computePerformance(entries: LedgerEntry[], price: PriceLookup, t
         category,
         value,
         invested: -list.reduce((sum, f) => sum + f.amount, 0),
+        contributed: -list.reduce((sum, f) => sum + Math.min(f.amount, 0), 0),
         xirr: xirr(withTerminal(list, value)),
         since: firstDate(list),
       };
