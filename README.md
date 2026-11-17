@@ -11,6 +11,7 @@
 - 依分類（台股、美股、BTC、ETH、放貸、其他）的現值圓餅圖
 - **目標配置對照**：目標 %、目前 %、偏離、調整至目標需買賣的金額（偏離 ±5% 內視為正常）
 - 已結清部位收合顯示各自的已實現損益（例如全部賣出的 ADA）
+- **放貸（Bitfinex）**收合區塊：每筆借出資金的金額、年利率、期間與剩餘天數，已借出 / 掛單中 / 閒置資金，本月至今利息，以及 USD 年化（放貸本身）與 TWD 年化（含匯差）
 - 支付用途資產（Ether.fi）獨立收合顯示，不計入總資產與配置
 - 金額隱藏 / 顯示切換、USD/TWD 匯率、恐懼貪婪指數
 - 累計績效摘要：整體年化報酬（XIRR）、累計總損益與淨值迷你走勢，點擊進入績效頁
@@ -27,9 +28,15 @@
 - 編輯與刪除（刪除為 Notion 封存，可從垃圾桶復原；成組紀錄會一起處理）
 
 ### ⇣ 匯入 (`/import`)
+
+**BitoPro 訂單**
 - 依幣種、狀態篩選 BitoPro 歷史訂單
 - 批次匯出成交紀錄至 Notion，自動帶入平台、類型、手續費與訂單編號
 - 已匯出的訂單會標示「已匯出」，不會重複匯出
+
+**Bitfinex 利息**
+- 列出 2026-12 起每個已結束月份（台灣時間）的放貸利息，一鍵寫入為該月最後一天的「利息」紀錄
+- 已寫入的月份標示「已同步」，以 `OrderId = BFX-INT-YYYY-MM` 防止重複
 
 ### ⇄ BitoPro (`/bitopro`)
 
@@ -45,7 +52,7 @@
 - 可用餘額查詢、當前掛單列表與一鍵取消
 
 ### ⚙️ 設定 (`/settings`)
-- BitoPro API 憑證（API Key / Secret / Email）與 Notion API 憑證（Token / Database ID），含連線驗證
+- BitoPro API 憑證（API Key / Secret / Email）、Notion API 憑證（Token / Database ID）與 Bitfinex 唯讀 API 憑證（Key / Secret），含連線驗證
 - 目標配置編輯（加總須為 100%，預設 BTC 40%、放貸 50%、ETH 10%）
 - 憑證與目標配置皆儲存於瀏覽器 localStorage（憑證經 XOR + Base64 混淆）
 
@@ -92,6 +99,7 @@
 - **跨分類移轉**：轉帳 / 兌換的兩端分類不同時（如 BitoPro USDT → Bitfinex），以轉入端當日市值，記為來源分類取回、目的分類投入；整體績效中兩者抵銷
 - **支付分類視為投資組合之外**：轉去 Ether.fi 等同以當日市值提領，累計淨投入隨之減少
 - **累計淨投入** = 整體現金流加總取負；**XIRR** 以各筆現金流加上今日市值（視為全部取回）計算
+- **放貸 USD 年化**：只看 Bitfinex 平台上的數量（USD / USDT 視為 1:1），跨平台轉入為投入、轉出為取回，利息為報酬；與放貸分類 TWD 年化的差距即匯率影響
 - **歷史價格**皆為未還原的實際成交價：台股用 FinMind（Yahoo 的台股價格已分割還原卻沒有分割事件）、美股與加密貨幣用 Yahoo 日線（依分割事件還原），以 USD/TWD 日線換算；快取 6 小時
 
 ### 分類規則（由上往下比對）
@@ -107,7 +115,9 @@
 
 ### 常見記帳流程
 
-**Bitfinex 放貸**：BitoPro 買入 USDT → 轉帳到 Bitfinex → 兌換成 USD → 每月依餘額增加記一筆利息。
+**Bitfinex 放貸**：BitoPro 買入 USDT → 轉帳到 Bitfinex → 兌換成 USD → 每月記一筆利息。2026-12 起的月份到「匯入 → Bitfinex 利息」一鍵寫入（從 API 加總該月利息，記在月底，`OrderId = BFX-INT-YYYY-MM` 防重複）；之前的月份沿用手動紀錄。
+
+Bitfinex API Key 請建立**唯讀**金鑰，只開啟 Wallets、Margin Funding、Account History 的讀取權限。
 
 **Ether.fi 支付卡**：從 BitoPro 轉帳到 Ether.fi；之後偶爾對帳，花掉的部分記「調整」（負數），回饋記「利息」。
 
@@ -121,13 +131,16 @@ web/
 │   ├── page.tsx                  # 資產總覽
 │   ├── performance/page.tsx      # 績效（淨值走勢、XIRR）
 │   ├── ledger/page.tsx           # 記帳
-│   ├── import/page.tsx           # 匯入（BitoPro 訂單匯出至 Notion）
+│   ├── import/page.tsx           # 匯入（BitoPro 訂單 / Bitfinex 利息頁籤）
 │   ├── bitopro/page.tsx          # BitoPro（行情 / 交易頁籤）
 │   ├── settings/page.tsx         # 設定
 │   ├── layout.tsx                # 全局 Layout（字體、PWA 設定）
 │   ├── globals.css               # 全局樣式
 │   └── api/                      # API Routes（Server-side）
 │       ├── bitopro/              # BitoPro API 代理（餘額、下單、訂單、行情）
+│       ├── bitfinex/
+│       │   ├── summary/          #   放貸現況（錢包、借出、掛單、本月利息）
+│       │   └── interest/         #   各月份利息總和
 │       ├── notion/
 │       │   ├── assets/           #   持倉計算結果
 │       │   └── entries/          #   記帳紀錄 CRUD（[id] 為編輯 / 刪除）
@@ -145,12 +158,17 @@ web/
 │   ├── AssetBadges.tsx           # 資產圖示、平台標籤
 │   ├── MarketPanel.tsx           # BitoPro 行情（TWD 交易對、拖放排序）
 │   ├── TradingPanel.tsx          # BitoPro 下單、餘額、掛單
+│   ├── BitoProImportPanel.tsx    # BitoPro 歷史訂單匯出至 Notion
+│   ├── BitfinexInterestPanel.tsx # Bitfinex 月利息同步
+│   ├── LendingCard.tsx           # 總覽頁的放貸區塊
+│   ├── BitfinexSettingsCard.tsx  # 設定頁的 Bitfinex 憑證
 │   ├── AllocationTargetsCard.tsx # 設定頁的目標配置編輯
 │   └── Card / Button / Input / Select / Header / Toast
 │
 ├── hooks/
 │   ├── useCredentials.ts         # BitoPro 憑證
 │   ├── useNotionCredentials.ts   # Notion 憑證
+│   ├── useBitfinexCredentials.ts # Bitfinex 憑證
 │   ├── useAllocationTargets.ts   # 目標配置
 │   ├── usePerformance.ts         # 績效資料
 │   └── useBitoProWebSocket.ts    # WebSocket 即時訂單簿
@@ -161,6 +179,7 @@ web/
 │   ├── performance.ts            # 績效核心：每日淨值重建、現金流、XIRR
 │   ├── priceHistory.ts           # 歷史日線價格（FinMind / Yahoo，未還原價）
 │   ├── bitopro.ts                # BitoPro REST API 封裝（v3）
+│   ├── bitfinex.ts               # Bitfinex REST API v2 封裝（唯讀：錢包、放貸、利息）
 │   ├── financeService.ts         # 匯率與股票報價（含快取與備援來源）
 │   ├── api.ts                    # 帶憑證的 fetch 工具函數
 │   └── crypto.ts                 # 憑證混淆工具
@@ -180,7 +199,7 @@ web/
 | **樣式** | Tailwind CSS 3.4 |
 | **字體** | SF Pro / 蘋方（Apple 裝置），其他平台使用 Inter |
 | **圖表** | Recharts |
-| **交易所 API** | BitoPro REST API v3 + WebSocket |
+| **交易所 API** | BitoPro REST API v3 + WebSocket、Bitfinex REST API v2（唯讀） |
 | **記帳資料庫** | Notion API (`@notionhq/client`) |
 | **匯率 / 股價** | Frankfurter、ExchangeRate-API、Yahoo Finance Chart API、FinMind（台股歷史價） |
 | **市場情緒** | Alternative.me Fear & Greed Index |

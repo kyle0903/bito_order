@@ -37,7 +37,34 @@ export interface PerformanceResult {
   series: DailyPoint[];
   overall: { value: number; invested: number; xirr: number | null; since: string };
   categories: CategoryPerformance[];
+  lendingUsd: { xirr: number | null; since: string } | null; // Bitfinex 放貸以 USD 計的年化（不含匯差）
   missingPrices: string[]; // 查不到歷史價格的代號
+}
+
+/**
+ * Bitfinex 放貸的 USD 年化：只看 Bitfinex 平台上的數量（視 USD / USDT 為 1:1），
+ * 轉入為投入、轉出為取回，利息為報酬，今日餘額視為全部取回
+ */
+function lendingUsdXirr(entries: LedgerEntry[], today: string): { xirr: number | null; since: string } | null {
+  const isBfx = (e: LedgerEntry) => e.platform === 'Bitfinex';
+  const flows: CashFlow[] = [];
+  let balance = 0;
+  const groups = new Map<string, LedgerEntry[]>();
+  for (const e of entries) {
+    if (isBfx(e)) balance += e.quantity;
+    if (GROUPED_TYPES.includes(e.type) && e.groupId) {
+      groups.set(e.groupId, [...(groups.get(e.groupId) || []), e]);
+    }
+  }
+  groups.forEach(legs => {
+    // 一端在 Bitfinex、另一端不在：跨平台移轉才是投入 / 取回
+    const bfxLegs = legs.filter(isBfx);
+    if (bfxLegs.length === 0 || bfxLegs.length === legs.length) return;
+    for (const leg of bfxLegs) flows.push({ date: leg.date, amount: -leg.quantity });
+  });
+  if (flows.length === 0) return null;
+  flows.sort((a, b) => (a.date < b.date ? -1 : 1));
+  return { xirr: xirr([...flows, { date: today, amount: balance }]), since: flows[0].date };
 }
 
 const EPSILON = 1e-8;
@@ -186,6 +213,7 @@ export function computePerformance(entries: LedgerEntry[], price: PriceLookup, t
       since: firstDate(overallFlows),
     },
     categories,
+    lendingUsd: lendingUsdXirr(sorted, today),
     missingPrices: Array.from(missing).sort(),
   };
 }

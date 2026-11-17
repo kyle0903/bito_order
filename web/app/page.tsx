@@ -11,6 +11,7 @@ import { Position, AssetCategory, CATEGORIES, PAYMENT_CATEGORY, categorize, isCl
 import { useAllocationTargets, ALLOCATION_TOLERANCE } from '@/hooks/useAllocationTargets';
 import { usePerformance, isUnderOneYear, formatPercent } from '@/hooks/usePerformance';
 import PerformanceChart from '@/components/PerformanceChart';
+import LendingCard from '@/components/LendingCard';
 import Link from 'next/link';
 
 // 顯示用資料介面
@@ -836,6 +837,9 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bitfinex 放貸明細（設定 Bitfinex 憑證後顯示） */}
+      <LendingCard performance={performance} showAmounts={showAmounts} />
 
       {/* 支付用途（如 Ether.fi 卡片），不計入總資產與配置 */}
       {!loading && paymentAssets.length > 0 && (
