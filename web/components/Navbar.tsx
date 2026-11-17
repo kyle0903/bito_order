@@ -7,6 +7,7 @@ import { useCredentials } from '@/hooks/useCredentials';
 
 const navigation = [
     { name: '資產總覽', href: '/', icon: '◫' },
+    { name: '績效', href: '/performance', icon: '↗' },
     { name: '記帳', href: '/ledger', icon: '✎' },
     { name: '匯入', href: '/import', icon: '⇣' },
     { name: 'BitoPro', href: '/bitopro', icon: '⇄' },

@@ -13,6 +13,12 @@
 - 已結清部位收合顯示各自的已實現損益（例如全部賣出的 ADA）
 - 支付用途資產（Ether.fi）獨立收合顯示，不計入總資產與配置
 - 金額隱藏 / 顯示切換、USD/TWD 匯率、恐懼貪婪指數
+- 累計績效摘要：整體年化報酬（XIRR）、累計總損益與淨值迷你走勢，點擊進入績效頁
+
+### ↗ 績效 (`/performance`)
+- 從帳本與每日收盤價**重建歷史淨值**，與累計淨投入畫在同一張走勢圖
+- 目前淨值、累計淨投入、總損益、整體 **XIRR**（資金加權年化報酬）
+- 各分類（台股、美股、BTC、ETH、放貸、其他）的現值、淨投入、損益與 XIRR；持有未滿一年會標示僅供參考
 
 ### ✎ 記帳 (`/ledger`)
 - 新增買入、賣出、利息、股利、轉帳、兌換、調整七種紀錄
@@ -80,6 +86,14 @@
 - 數量趨近 0 視為已結清；之後再買入會從新部位開始計算
 - USD 以 USD/TWD 匯率計價；加密貨幣優先使用 BitoPro TWD 交易對價格，其次 Yahoo Finance
 
+### 績效計算（`/performance`）
+
+- **現金流**（投資人角度，投入為負、取回為正）：買入、賣出、股利為 `-Amount`；利息與調整不是現金流，屬於報酬
+- **跨分類移轉**：轉帳 / 兌換的兩端分類不同時（如 BitoPro USDT → Bitfinex），以轉入端當日市值，記為來源分類取回、目的分類投入；整體績效中兩者抵銷
+- **支付分類視為投資組合之外**：轉去 Ether.fi 等同以當日市值提領，累計淨投入隨之減少
+- **累計淨投入** = 整體現金流加總取負；**XIRR** 以各筆現金流加上今日市值（視為全部取回）計算
+- **歷史價格**皆為未還原的實際成交價：台股用 FinMind（Yahoo 的台股價格已分割還原卻沒有分割事件）、美股與加密貨幣用 Yahoo 日線（依分割事件還原），以 USD/TWD 日線換算；快取 6 小時
+
 ### 分類規則（由上往下比對）
 
 | 條件 | 分類 |
@@ -105,6 +119,7 @@
 web/
 ├── app/                          # Next.js App Router
 │   ├── page.tsx                  # 資產總覽
+│   ├── performance/page.tsx      # 績效（淨值走勢、XIRR）
 │   ├── ledger/page.tsx           # 記帳
 │   ├── import/page.tsx           # 匯入（BitoPro 訂單匯出至 Notion）
 │   ├── bitopro/page.tsx          # BitoPro（行情 / 交易頁籤）
@@ -116,6 +131,7 @@ web/
 │       ├── notion/
 │       │   ├── assets/           #   持倉計算結果
 │       │   └── entries/          #   記帳紀錄 CRUD（[id] 為編輯 / 刪除）
+│       ├── performance/          # 帳本重建的淨值走勢與 XIRR
 │       ├── finance/
 │       │   ├── stock/[symbol]/   #   股票報價（Yahoo Finance）
 │       │   └── fx/               #   USD/TWD 匯率
@@ -125,6 +141,7 @@ web/
 │   ├── Navbar.tsx                # 頂部毛玻璃導覽列
 │   ├── DashboardLayout.tsx       # 頁面 Layout 容器
 │   ├── AssetPieChart.tsx         # 分類圓餅圖與分類顏色
+│   ├── PerformanceChart.tsx      # 淨值 vs 累計淨投入走勢圖（含迷你版）
 │   ├── AssetBadges.tsx           # 資產圖示、平台標籤
 │   ├── MarketPanel.tsx           # BitoPro 行情（TWD 交易對、拖放排序）
 │   ├── TradingPanel.tsx          # BitoPro 下單、餘額、掛單
@@ -135,11 +152,14 @@ web/
 │   ├── useCredentials.ts         # BitoPro 憑證
 │   ├── useNotionCredentials.ts   # Notion 憑證
 │   ├── useAllocationTargets.ts   # 目標配置
+│   ├── usePerformance.ts         # 績效資料
 │   └── useBitoProWebSocket.ts    # WebSocket 即時訂單簿
 │
 ├── lib/
 │   ├── ledger.ts                 # 記帳核心：型別、平均成本計算、分類規則（前後端共用）
 │   ├── notionLedger.ts           # Notion 讀寫（分頁查詢、欄位轉換）
+│   ├── performance.ts            # 績效核心：每日淨值重建、現金流、XIRR
+│   ├── priceHistory.ts           # 歷史日線價格（FinMind / Yahoo，未還原價）
 │   ├── bitopro.ts                # BitoPro REST API 封裝（v3）
 │   ├── financeService.ts         # 匯率與股票報價（含快取與備援來源）
 │   ├── api.ts                    # 帶憑證的 fetch 工具函數
@@ -162,7 +182,7 @@ web/
 | **圖表** | Recharts |
 | **交易所 API** | BitoPro REST API v3 + WebSocket |
 | **記帳資料庫** | Notion API (`@notionhq/client`) |
-| **匯率 / 股價** | Frankfurter、ExchangeRate-API、Yahoo Finance Chart API |
+| **匯率 / 股價** | Frankfurter、ExchangeRate-API、Yahoo Finance Chart API、FinMind（台股歷史價） |
 | **市場情緒** | Alternative.me Fear & Greed Index |
 | **圖示** | spothq/cryptocurrency-icons（加密貨幣）、Financial Modeling Prep（公司 logo） |
 
