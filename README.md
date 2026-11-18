@@ -24,6 +24,7 @@
 ### ✎ 記帳 (`/ledger`)
 - 新增買入、賣出、利息、股利、轉帳、兌換、調整七種紀錄
 - 轉帳與兌換一次產生轉出、轉入兩筆，並以 GroupId 綁定
+- 台股買賣輸入股數與成交單價即自動算出實付 / 實收（手續費 0.1425% × 設定頁折數，整股最低 20 元、零股 1 元；賣出另計證交稅，股票 0.3%、00 開頭 ETF 0.1%），金額仍可手動修正
 - 依平台、代號、類型篩選紀錄
 - 編輯與刪除（刪除為 Notion 封存，可從垃圾桶復原；成組紀錄會一起處理）
 
@@ -119,6 +120,10 @@
 
 Bitfinex API Key 請建立**唯讀**金鑰，只開啟 Wallets、Margin Funding、Account History 的讀取權限。
 
+**台股**：平台選「券商」、代號如 `0050.TW`，填股數與成交單價，金額自動帶入（記折扣後的實際成本，不管隔月退佣的時間差）。
+
+**複委託（美股）**：台幣交割，直接照對帳單填實際扣款 / 入帳的台幣金額。
+
 **Ether.fi 支付卡**：從 BitoPro 轉帳到 Ether.fi；之後偶爾對帳，花掉的部分記「調整」（負數），回饋記「利息」。
 
 ---
@@ -163,6 +168,7 @@ web/
 │   ├── LendingCard.tsx           # 總覽頁的放貸區塊
 │   ├── BitfinexSettingsCard.tsx  # 設定頁的 Bitfinex 憑證
 │   ├── AllocationTargetsCard.tsx # 設定頁的目標配置編輯
+│   ├── TwFeeDiscountCard.tsx     # 設定頁的台股手續費折數
 │   └── Card / Button / Input / Select / Header / Toast
 │
 ├── hooks/
@@ -170,12 +176,14 @@ web/
 │   ├── useNotionCredentials.ts   # Notion 憑證
 │   ├── useBitfinexCredentials.ts # Bitfinex 憑證
 │   ├── useAllocationTargets.ts   # 目標配置
+│   ├── useTwFeeDiscount.ts       # 台股手續費折數
 │   ├── usePerformance.ts         # 績效資料
 │   └── useBitoProWebSocket.ts    # WebSocket 即時訂單簿
 │
 ├── lib/
 │   ├── ledger.ts                 # 記帳核心：型別、平均成本計算、分類規則（前後端共用）
 │   ├── notionLedger.ts           # Notion 讀寫（分頁查詢、欄位轉換）
+│   ├── twStockFee.ts             # 台股手續費與證交稅計算
 │   ├── performance.ts            # 績效核心：每日淨值重建、現金流、XIRR
 │   ├── priceHistory.ts           # 歷史日線價格（FinMind / Yahoo，未還原價）
 │   ├── bitopro.ts                # BitoPro REST API 封裝（v3）
