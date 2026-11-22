@@ -50,7 +50,7 @@ class BitoProAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch balance: ${response.status}`);
+      throw new Error(`Failed to fetch balance: ${response.status} ${await response.text()}`);
     }
 
     return response.json();
@@ -71,7 +71,7 @@ class BitoProAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch orders: ${response.status}`);
+      throw new Error(`Failed to fetch orders: ${response.status} ${await response.text()}`);
     }
 
     return response.json();
@@ -119,7 +119,7 @@ class BitoProAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to cancel order: ${response.status}`);
+      throw new Error(`Failed to cancel order: ${response.status} ${await response.text()}`);
     }
 
     return response.json();
@@ -133,7 +133,7 @@ class BitoProAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get order: ${response.status}`);
+      throw new Error(`Failed to get order: ${response.status} ${await response.text()}`);
     }
 
     return response.json();
