@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
@@ -45,7 +44,7 @@ const availablePairs = [
   { value: 'usdc_twd', label: 'USDC/TWD' },
 ];
 
-export default function HistoryPage() {
+export default function BitoProImportPanel() {
   const { credentials, isConfigured } = useCredentials();
   const { credentials: notionCredentials } = useNotionCredentials();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -232,7 +231,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <DashboardLayout title="訂單紀錄">
+    <>
       {/* 過濾器 */}
       <Card className="mb-6">
         <CardContent className="py-4">
@@ -529,7 +528,7 @@ export default function HistoryPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }
 

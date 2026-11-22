@@ -1,5 +1,6 @@
 import { Credentials } from '@/hooks/useCredentials';
 import { NotionCredentials } from '@/hooks/useNotionCredentials';
+import { BitfinexCredentials } from '@/hooks/useBitfinexCredentials';
 
 /**
  * 將 BitoPro 憑證轉換為 headers
@@ -61,6 +62,23 @@ export async function fetchWithNotionCredentials(
   return fetch(url, {
     ...options,
     headers,
+  });
+}
+
+/**
+ * 帶 Bitfinex 憑證的 fetch 函數
+ */
+export async function fetchWithBitfinexCredentials(
+  url: string,
+  credentials: BitfinexCredentials | null,
+  options: RequestInit = {}
+): Promise<Response> {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...(credentials ? { 'X-Bitfinex-Key': credentials.apiKey, 'X-Bitfinex-Secret': credentials.apiSecret } : {}),
+    },
   });
 }
 

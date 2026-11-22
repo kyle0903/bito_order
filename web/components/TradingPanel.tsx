@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
@@ -45,7 +44,7 @@ const orderTypes = [
   { value: 'limit', label: '限價單' },
 ];
 
-export default function TradingPage() {
+export default function TradingPanel() {
   const { credentials, isConfigured } = useCredentials();
   const [pair, setPair] = useState('');
   const [orderType, setOrderType] = useState('market');
@@ -235,7 +234,7 @@ export default function TradingPage() {
   };
 
   return (
-    <DashboardLayout title="交易">
+    <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左側：交易表單 */}
         <div className="lg:col-span-2">
@@ -527,6 +526,6 @@ export default function TradingPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

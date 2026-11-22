@@ -6,6 +6,8 @@ import Card, { CardHeader, CardContent } from '@/components/Card';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import AllocationTargetsCard from '@/components/AllocationTargetsCard';
+import BitfinexSettingsCard from '@/components/BitfinexSettingsCard';
+import TwFeeDiscountCard from '@/components/TwFeeDiscountCard';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
@@ -309,6 +311,8 @@ export default function SettingsPage() {
               </p>
             </CardContent>
           </Card>
+
+          <BitfinexSettingsCard />
         </div>
 
         {/* 右側：連線狀態 & 帳戶資訊 */}
@@ -463,6 +467,8 @@ export default function SettingsPage() {
           </Card>
 
           <AllocationTargetsCard />
+
+          <TwFeeDiscountCard />
 
           {/* 關於 */}
           <Card>

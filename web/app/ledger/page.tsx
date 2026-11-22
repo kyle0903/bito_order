@@ -9,8 +9,10 @@ import Button from '@/components/Button';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
 import {
-  ENTRY_TYPES, EntryType, GROUPED_TYPES, LedgerEntry, LedgerEntryInput, PLATFORMS, Platform,
+  ENTRY_TYPES, EntryType, GROUPED_TYPES, LedgerEntry, LedgerEntryInput, PLATFORMS, Platform, categorize,
 } from '@/lib/ledger';
+import { calcTwStockCost } from '@/lib/twStockFee';
+import { useTwFeeDiscount } from '@/hooks/useTwFeeDiscount';
 import Link from 'next/link';
 
 interface FormState {
@@ -21,6 +23,7 @@ interface FormState {
   target: string;
   quantity: string;
   amount: string;
+  price: string; // 台股買賣的成交單價，填了就自動算金額
   // 轉帳 / 兌換
   fromPlatform: Platform;
   fromTarget: string;
@@ -45,6 +48,7 @@ const emptyForm = (): FormState => ({
   target: '',
   quantity: '',
   amount: '',
+  price: '',
   fromPlatform: 'BitoPro',
   fromTarget: 'USDT',
   fromQty: '',
@@ -59,8 +63,20 @@ const newGroupId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10
 
 const fmt = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 8 });
 
+const isTwStockTrade = (f: FormState) =>
+  (f.type === '買入' || f.type === '賣出') && categorize(f.target, f.platform) === '台股';
+
+/** 台股買賣：股數與單價都有填時，依手續費折數算出實付 / 實收 */
+const twStockCost = (f: FormState, discount: number) => {
+  const shares = parseFloat(f.quantity);
+  const price = parseFloat(f.price);
+  if (!isTwStockTrade(f) || !(shares > 0) || !(price > 0)) return null;
+  return calcTwStockCost(f.type === '賣出' ? 'sell' : 'buy', f.target, shares, price, discount);
+};
+
 export default function LedgerPage() {
   const { credentials, isConfigured, isLoading: isCredLoading } = useNotionCredentials();
+  const { discount } = useTwFeeDiscount();
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +147,16 @@ export default function LedgerPage() {
     (filterType === 'all' || row.legs[0].type === filterType)
   );
 
-  const updateForm = (patch: Partial<FormState>) => setForm(prev => ({ ...prev, ...patch }));
+  const updateForm = (patch: Partial<FormState>) => setForm(prev => {
+    const next = { ...prev, ...patch };
+    // 改了金額以外的欄位就重算台股金額；直接改金額則保留手動值
+    if (!('amount' in patch)) {
+      const cost = twStockCost(next, discount);
+      if (cost) next.amount = String(cost.amount);
+    }
+    return next;
+  });
+  const cost = twStockCost(form, discount);
 
   // 表單 → 要寫入的紀錄
   const buildEntries = (): LedgerEntryInput[] | string => {
@@ -144,6 +169,10 @@ export default function LedgerPage() {
       const noAmount = type === '利息' || type === '調整';
       const amount = noAmount ? 0 : parseFloat(form.amount);
       if (!target) return '請輸入代號';
+      if (type === '股利') {
+        if (!(amount > 0)) return '實收金額須大於 0';
+        return [{ type, date, platform: form.platform, target, quantity: 0, amount: -amount }];
+      }
       if (type === '調整') {
         if (!quantity) return '調整數量不可為 0（減少請輸入負數）';
         return [{ type, date, platform: form.platform, target, quantity, amount: 0 }];
@@ -297,7 +326,7 @@ export default function LedgerPage() {
           </div>
 
           {!grouped ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className={`grid grid-cols-2 gap-3 ${isTwStockTrade(form) ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
               <Select
                 label="平台"
                 value={form.platform}
@@ -310,23 +339,47 @@ export default function LedgerPage() {
                 value={form.target}
                 onChange={e => updateForm({ target: e.target.value })}
               />
-              <Input
-                label={form.type === '調整' ? '調整數量（減少輸入負數，成本不變）' : '數量'}
-                type="number"
-                min={form.type === '調整' ? undefined : 0}
-                step="any"
-                value={form.quantity}
-                onChange={e => updateForm({ quantity: e.target.value })}
-              />
+              {form.type !== '股利' && (
+                <Input
+                  label={form.type === '調整' ? '調整數量（減少輸入負數，成本不變）' : isTwStockTrade(form) ? '股數' : '數量'}
+                  type="number"
+                  min={form.type === '調整' ? undefined : 0}
+                  step="any"
+                  value={form.quantity}
+                  onChange={e => updateForm({ quantity: e.target.value })}
+                />
+              )}
+              {isTwStockTrade(form) && (
+                <Input
+                  label="成交單價（填了自動算金額）"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.price}
+                  onChange={e => updateForm({ price: e.target.value })}
+                />
+              )}
               {form.type !== '利息' && form.type !== '調整' && (
                 <Input
-                  label={form.type === '賣出' ? '實收金額 (TWD，扣除手續費)' : '金額 (TWD，含手續費)'}
+                  label={
+                    form.type === '賣出' ? '實收金額 (TWD，扣除手續費)'
+                      : form.type === '股利' ? '實收股利 (TWD，扣除預扣稅與費用)'
+                        : '金額 (TWD，含手續費)'
+                  }
                   type="number"
                   min={0}
                   step="any"
                   value={form.amount}
                   onChange={e => updateForm({ amount: e.target.value })}
                 />
+              )}
+              {cost && (
+                <p className="col-span-full text-xs text-neutral-500 tabular-nums">
+                  成交 {cost.gross.toLocaleString()} {form.type === '賣出' ? '−' : '+'} 手續費 {cost.fee.toLocaleString()}（{discount} 折）
+                  {form.type === '賣出' && <> − 證交稅 {cost.tax.toLocaleString()}</>}
+                  {' '}= {cost.amount.toLocaleString()}
+                  {String(cost.amount) !== form.amount && <span className="text-warning-400">（金額已手動修改）</span>}
+                </p>
               )}
             </div>
           ) : (
@@ -461,7 +514,7 @@ export default function LedgerPage() {
                           {pair && first.target !== second.target ? `${first.target} → ${second.target}` : first.target}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right tabular-nums text-neutral-100">
-                          {pair ? `${fmt(-first.quantity)} → ${fmt(second.quantity)}` : fmt(first.quantity)}
+                          {pair ? `${fmt(-first.quantity)} → ${fmt(second.quantity)}` : first.type === '股利' ? '--' : fmt(first.quantity)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right tabular-nums text-neutral-100">
                           {pair || first.amount === 0 ? '--' : first.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}

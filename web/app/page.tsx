@@ -9,6 +9,9 @@ import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
 import { Position, AssetCategory, CATEGORIES, PAYMENT_CATEGORY, categorize, isClosed, positionKey } from '@/lib/ledger';
 import { useAllocationTargets, ALLOCATION_TOLERANCE } from '@/hooks/useAllocationTargets';
+import { usePerformance, isUnderOneYear, formatPercent } from '@/hooks/usePerformance';
+import PerformanceChart from '@/components/PerformanceChart';
+import LendingCard from '@/components/LendingCard';
 import Link from 'next/link';
 
 // 顯示用資料介面
@@ -42,6 +45,7 @@ interface FearGreedData {
 export default function Home() {
   const { credentials: notionCredentials, isConfigured: isNotionConfigured, isLoading: isNotionLoading } = useNotionCredentials();
   const { targets: allocationTargets } = useAllocationTargets();
+  const { data: performance, loading: performanceLoading } = usePerformance();
   const [assets, setAssets] = useState<AssetDisplay[]>([]);
   const [closedAssets, setClosedAssets] = useState<AssetDisplay[]>([]);
   const [paymentAssets, setPaymentAssets] = useState<AssetDisplay[]>([]); // 支付用途（不計入總資產）
@@ -528,6 +532,49 @@ export default function Home() {
         </Card>
       </div>
 
+      {/* 累計績效摘要（帳本重建） */}
+      {!notionNotConfigured && (
+        <Link href="/performance" className="block mb-6">
+          <Card className="hover:bg-neutral-800/60 transition-colors">
+            <CardContent className="py-5 flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex flex-wrap gap-x-8 gap-y-2 md:w-auto">
+                <div>
+                  <p className="text-sm font-medium text-neutral-400 mb-1">年化報酬 (XIRR)</p>
+                  <p className={`text-3xl font-bold tabular-nums ${!performance || performance.overall.xirr === null ? 'text-neutral-100' : performance.overall.xirr >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                    {performanceLoading || !performance ? '...' : formatPercent(performance.overall.xirr)}
+                  </p>
+                  {performance && (
+                    <p className="text-xs text-neutral-400 mt-1">
+                      自 {performance.overall.since}{isUnderOneYear(performance.overall.since) ? '（未滿一年）' : ''}
+                    </p>
+                  )}
+                </div>
+                {performance && (() => {
+                  const { value, invested } = performance.overall;
+                  const profit = value - invested;
+                  return (
+                    <div>
+                      <p className="text-sm font-medium text-neutral-400 mb-1">累計總損益</p>
+                      <p className={`text-3xl font-bold tabular-nums ${profit >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                        {profit >= 0 ? '+' : ''}NT$ {formatAmount(profit, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                      <p className="text-xs text-neutral-400 mt-1">
+                        累計淨投入 NT$ {formatAmount(invested, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        {invested > 0 && ` · ${formatPercent(profit / invested)}`}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="flex-1 h-16 min-w-0">
+                {performance && <PerformanceChart data={performance.series} showAmounts={showAmounts} compact />}
+              </div>
+              <span className="text-sm text-primary-400 whitespace-nowrap">查看績效 →</span>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         {/* 資產配置圓餅圖（現值） */}
         <Card>
@@ -790,6 +837,9 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bitfinex 放貸明細（設定 Bitfinex 憑證後顯示） */}
+      <LendingCard performance={performance} showAmounts={showAmounts} />
 
       {/* 支付用途（如 Ether.fi 卡片），不計入總資產與配置 */}
       {!loading && paymentAssets.length > 0 && (
