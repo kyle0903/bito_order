@@ -7,7 +7,7 @@ import Button from '@/components/Button';
 import Select from '@/components/Select';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useBitoProWebSocket } from '@/hooks/useBitoProWebSocket';
-import { fetchWithCredentials } from '@/lib/api';
+import { getBalance, getOrders, createOrder, cancelOrder as cancelBitoProOrder } from '@/lib/bitoproClient';
 import Link from 'next/link';
 
 interface Asset {
@@ -75,13 +75,7 @@ export default function TradingPanel() {
 
     try {
       setBalanceLoading(true);
-      const response = await fetchWithCredentials('/api/bitopro/balance', credentials);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch balance');
-      }
-
-      const data = await response.json();
+      const data = await getBalance(credentials!);
 
       // 過濾並轉換餘額資料
       const formattedBalances: BalanceDisplay[] = (data.data || [])
@@ -115,20 +109,9 @@ export default function TradingPanel() {
       // 取得所有交易對的掛單
       const allOrders: OpenOrder[] = [];
 
-      for (const p of pairs.filter(p => p.value)) {
-        const response = await fetchWithCredentials(
-          `/api/bitopro/orders?pairs=${p.value.toLowerCase()}`,
-          credentials
-        );
-        if (response.ok) {
-          const data = await response.json();
-          // 只取狀態為 0 掛單中 或 1 掛單中(部分成交) 的訂單
-          const openOrdersForPair = (data.data || []).filter(
-            (o: OpenOrder) => o.status === 0 || o.status === 1
-          );
-          allOrders.push(...openOrdersForPair);
-        }
-      }
+      const orders = await getOrders(credentials!, pairs.filter(p => p.value).map(p => p.value));
+      // 只取狀態為 0 掛單中 或 1 掛單中(部分成交) 的訂單
+      allOrders.push(...orders.filter((o: OpenOrder) => o.status === 0 || o.status === 1));
 
       setOpenOrders(allOrders);
     } catch (err) {
@@ -146,22 +129,12 @@ export default function TradingPanel() {
   const cancelOrder = async (orderId: string, orderPair: string) => {
     setCancellingOrderId(orderId);
     try {
-      const response = await fetchWithCredentials('/api/bitopro/order/cancel', credentials, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pair: orderPair.toLowerCase(), orderId }),
-      });
-
-      if (response.ok) {
-        setOrderResult({ success: true, message: '訂單已取消' });
-        fetchOpenOrders();
-        fetchBalance();
-      } else {
-        const data = await response.json();
-        setOrderResult({ success: false, message: data.error || '取消失敗' });
-      }
+      await cancelBitoProOrder(credentials!, orderPair, orderId);
+      setOrderResult({ success: true, message: '訂單已取消' });
+      fetchOpenOrders();
+      fetchBalance();
     } catch (err) {
-      setOrderResult({ success: false, message: '取消訂單失敗' });
+      setOrderResult({ success: false, message: err instanceof Error ? err.message : '取消訂單失敗' });
     } finally {
       setCancellingOrderId(null);
     }
@@ -190,23 +163,15 @@ export default function TradingPanel() {
     setOrderResult(null);
 
     try {
-      const orderData = {
+      const data = await createOrder(credentials!, {
         pair: pair.toLowerCase(),
         action: orderSide,
         amount: amount,
         ...(orderType === 'limit' && { price: price }),
-        type: orderType
-      };
-
-      const response = await fetchWithCredentials('/api/bitopro/order', credentials, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
+        type: orderType as 'limit' | 'market'
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.orderId) {
+      if (data?.orderId) {
         setOrderResult({
           success: true,
           message: `訂單已建立！訂單編號: ${data.orderId}`

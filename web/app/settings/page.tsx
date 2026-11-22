@@ -10,7 +10,8 @@ import BitfinexSettingsCard from '@/components/BitfinexSettingsCard';
 import TwFeeDiscountCard from '@/components/TwFeeDiscountCard';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
-import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
+import { fetchWithNotionCredentials } from '@/lib/api';
+import { getBalance } from '@/lib/bitoproClient';
 
 interface BalanceItem {
   currency: string;
@@ -71,20 +72,12 @@ export default function SettingsPage() {
     setConnectionMessage('正在測試連線...');
 
     try {
-      const response = await fetchWithCredentials('/api/bitopro/balance', credentials);
-
-      if (response.ok) {
-        const data = await response.json();
-        const balances = (data.data || []).filter((b: BalanceItem) => parseFloat(b.amount) > 0.0001);
-        setAccountBalances(balances);
-        setConnectionStatus('success');
-        setConnectionMessage('API 連線成功');
-        setLastTestTime(new Date());
-      } else {
-        const errorData = await response.json();
-        setConnectionStatus('error');
-        setConnectionMessage(errorData.error || 'API 連線失敗');
-      }
+      const data = await getBalance(credentials!);
+      const balances = (data.data || []).filter((b: BalanceItem) => parseFloat(b.amount) > 0.0001);
+      setAccountBalances(balances);
+      setConnectionStatus('success');
+      setConnectionMessage('API 連線成功');
+      setLastTestTime(new Date());
     } catch (err) {
       setConnectionStatus('error');
       setConnectionMessage(err instanceof Error ? err.message : '連線失敗');

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/Card';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
-import { fetchWithCredentials, fetchWithNotionCredentials } from '@/lib/api';
+import { fetchWithNotionCredentials } from '@/lib/api';
+import { getOrders } from '@/lib/bitoproClient';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { LedgerEntryInput } from '@/lib/ledger';
@@ -90,22 +91,7 @@ export default function BitoProImportPanel() {
       setLoading(true);
       setError(null);
 
-      // 構建 query string（只有幣種）
-      const params = new URLSearchParams();
-      if (selectedPairs.length > 0) params.set('pairs', selectedPairs.join(','));
-
-      const response = await fetchWithCredentials(
-        `/api/bitopro/orders?${params.toString()}`,
-        credentials
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-
-
-      const data = await response.json();
-      setOrders(data.data || []);
+      setOrders(await getOrders(credentials!, selectedPairs));
     } catch (err) {
       console.error('Failed to fetch orders:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');

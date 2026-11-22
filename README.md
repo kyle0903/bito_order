@@ -142,7 +142,6 @@ web/
 │   ├── layout.tsx                # 全局 Layout（字體、PWA 設定）
 │   ├── globals.css               # 全局樣式
 │   └── api/                      # API Routes（Server-side）
-│       ├── bitopro/              # BitoPro API 代理（餘額、下單、訂單、行情）
 │       ├── bitfinex/
 │       │   ├── summary/          #   放貸現況（錢包、借出、掛單、本月利息）
 │       │   └── interest/         #   各月份利息總和
@@ -186,7 +185,7 @@ web/
 │   ├── twStockFee.ts             # 台股手續費與證交稅計算
 │   ├── performance.ts            # 績效核心：每日淨值重建、現金流、XIRR
 │   ├── priceHistory.ts           # 歷史日線價格（FinMind / Yahoo，未還原價）
-│   ├── bitopro.ts                # BitoPro REST API 封裝（v3）
+│   ├── bitoproClient.ts          # BitoPro REST API v3 瀏覽器端用戶端（直接呼叫，簽章在瀏覽器內計算）
 │   ├── bitfinex.ts               # Bitfinex REST API v2 封裝（唯讀：錢包、放貸、利息）
 │   ├── financeService.ts         # 匯率與股票報價（含快取與備援來源）
 │   ├── api.ts                    # 帶憑證的 fetch 工具函數
@@ -282,8 +281,9 @@ npm start
 ## 🔒 安全注意事項
 
 - 切勿將 `.env` 檔案提交至版本控制
-- API 金鑰請妥善保管，建議於 BitoPro 設定 IP 白名單
+- API 金鑰請妥善保管，BitoPro 金鑰建議不開啟提領權限
 - 瀏覽器端儲存的憑證使用 XOR + Base64 混淆，非高安全性加密，僅防止明文暴露
+- BitoPro API 由瀏覽器直接呼叫，不經過伺服器：BitoPro 會擋雲端機房（Vercel / AWS）的 IP，從使用者自己的網路呼叫則正常；API Secret 只在瀏覽器內計算簽章，不會送出。因為呼叫來源是當下的網路，不適合設定 IP 白名單；開啟國外 VPN 時也可能被擋
 
 ---
 

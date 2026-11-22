@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/Card';
+import { getTwdTickers } from '@/lib/bitoproClient';
 
 interface Ticker {
   pair: string;
@@ -51,48 +52,38 @@ export default function MarketPanel() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/bitopro/tickers', { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch tickers');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        const fetchedTickers: Ticker[] = data.data || [];
-        setTickers(fetchedTickers);
-        setLastUpdated(new Date());
-        
-        // 使用 savedOrderRef 來決定排序
-        const currentSavedOrder = savedOrderRef.current;
-        
-        if (!currentSavedOrder || currentSavedOrder.length === 0) {
-          // 沒有已儲存的排序，使用預設市值排序
-          const sortedByMarketCap = [...fetchedTickers].sort(
-            (a, b) =>
-              parseFloat(b.lastPrice) * parseFloat(b.volume24hr) -
-              parseFloat(a.lastPrice) * parseFloat(a.volume24hr)
-          );
-          const defaultOrder = sortedByMarketCap.map(t => t.pair);
-          setDisplayOrder(defaultOrder);
-          saveDisplayOrder(defaultOrder);
-        } else {
-          // 有已儲存的排序，檢查是否有新幣種
-          const existingPairs = new Set(currentSavedOrder);
-          const newPairs = fetchedTickers
-            .filter(t => !existingPairs.has(t.pair))
-            .map(t => t.pair);
-          
-          if (newPairs.length > 0) {
-            const updatedOrder = [...currentSavedOrder, ...newPairs];
-            setDisplayOrder(updatedOrder);
-            saveDisplayOrder(updatedOrder);
-          } else {
-            // 確保 displayOrder 是最新的
-            setDisplayOrder(currentSavedOrder);
-          }
-        }
+      const fetchedTickers: Ticker[] = await getTwdTickers();
+      setTickers(fetchedTickers);
+      setLastUpdated(new Date());
+      
+      // 使用 savedOrderRef 來決定排序
+      const currentSavedOrder = savedOrderRef.current;
+      
+      if (!currentSavedOrder || currentSavedOrder.length === 0) {
+        // 沒有已儲存的排序，使用預設市值排序
+        const sortedByMarketCap = [...fetchedTickers].sort(
+          (a, b) =>
+            parseFloat(b.lastPrice) * parseFloat(b.volume24hr) -
+            parseFloat(a.lastPrice) * parseFloat(a.volume24hr)
+        );
+        const defaultOrder = sortedByMarketCap.map(t => t.pair);
+        setDisplayOrder(defaultOrder);
+        saveDisplayOrder(defaultOrder);
       } else {
-        throw new Error(data.error || 'Unknown error');
+        // 有已儲存的排序，檢查是否有新幣種
+        const existingPairs = new Set(currentSavedOrder);
+        const newPairs = fetchedTickers
+          .filter(t => !existingPairs.has(t.pair))
+          .map(t => t.pair);
+        
+        if (newPairs.length > 0) {
+          const updatedOrder = [...currentSavedOrder, ...newPairs];
+          setDisplayOrder(updatedOrder);
+          saveDisplayOrder(updatedOrder);
+        } else {
+          // 確保 displayOrder 是最新的
+          setDisplayOrder(currentSavedOrder);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');

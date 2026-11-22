@@ -7,6 +7,7 @@ import AssetPieChart, { CATEGORY_COLORS } from '@/components/AssetPieChart';
 import { AssetIcon, PlatformBadge } from '@/components/AssetBadges';
 import { useNotionCredentials } from '@/hooks/useNotionCredentials';
 import { fetchWithNotionCredentials } from '@/lib/api';
+import { getTicker } from '@/lib/bitoproClient';
 import { Position, AssetCategory, CATEGORIES, PAYMENT_CATEGORY, categorize, isClosed, positionKey } from '@/lib/ledger';
 import { useAllocationTargets, ALLOCATION_TOLERANCE } from '@/hooks/useAllocationTargets';
 import { usePerformance, isUnderOneYear, formatPercent } from '@/hooks/usePerformance';
@@ -115,21 +116,16 @@ export default function Home() {
 
     // 1. 先嘗試從 BitoPro 取得加密貨幣價格
     try {
-      const pair = `${symbol.toLowerCase()}_twd`;
-      const response = await fetch(`/api/bitopro/ticker/${pair}`);
+      const data = await getTicker(`${symbol.toLowerCase()}_twd`);
+      const price = parseFloat(data?.data?.lastPrice) || 0;
 
-      if (response.ok) {
-        const data = await response.json();
-        const price = parseFloat(data.data?.lastPrice) || 0;
-
-        if (price > 0) {
-          return {
-            price,
-            priceChange24hr: parseFloat(data.data?.priceChange24hr) || 0,
-            hasTWDPair: true,
-            quoteCurrency: 'TWD',
-          };
-        }
+      if (price > 0) {
+        return {
+          price,
+          priceChange24hr: parseFloat(data.data?.priceChange24hr) || 0,
+          hasTWDPair: true,
+          quoteCurrency: 'TWD',
+        };
       }
     } catch {
       // BitoPro 失敗，繼續嘗試 Yahoo Finance
